@@ -156,6 +156,7 @@ function restoreFigures(n) {
                 elem.style.top = y + 'px';
 
                 leaveDroppable(currentDropElem);
+                currentDropElem.style.backgroundColor = '#d1eaff';
                 baseInfo.innerHTML = 'Whoooaaaaaa!';
                 elem.classList.add('put-in');
                 const transTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in')).transitionDuration) * 1000;
@@ -163,9 +164,10 @@ function restoreFigures(n) {
 
                 setTimeout(() => {
                     elem.hidden = true;
+                    currentDropElem.style.backgroundColor = '';
 
                     if (!k) {
-                        setTimeout(() => showRestoreQuestion(), 100);
+                        setTimeout(() => showRestoreQuestion(), 200);
                     }
                 }, transTime);
             } else {
