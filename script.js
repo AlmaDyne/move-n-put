@@ -1,12 +1,11 @@
 'use strict';
 
-const innerBox = document.getElementById('inner-box');
+import { shuffle } from "./function_storage.js";
+
+const innerBank = document.getElementById('inner-bank');
 const figAmount = document.getElementById('figures-amount');
 const assorty = document.getElementById('assorted-figures');
 const refresh = document.getElementById('refresh-button');
-const baseElem1 = document.getElementById('base-elem1');
-const baseElem2 = document.getElementById('base-elem2');
-const baseElem3 = document.getElementById('base-elem3');
 const docHeight = Math.max(
     document.body.scrollHeight, document.documentElement.scrollHeight,
     document.body.offsetHeight, document.documentElement.offsetHeight,
@@ -17,36 +16,61 @@ const docWidth = Math.max(
     document.body.offsetWidth, document.documentElement.offsetWidth,
     document.body.clientWidth, document.documentElement.clientWidth
 );
-let k = 0; // Подсчёт элементов
+const figNames = ['square', 'triangle', 'circle', 'rectangle', 'ellipse', 'rhombus'];
+const colors = {
+    yellow: '#fbff00',
+    green: '#65ff57',
+    pink: '#ff6ec7',
+    blue: '#6d77ff',
+    brown: '#ffb03b',
+    skyblue: '#7affff'
+};
+let k; // Подсчёт элементов
+let elAmount;
 
-let elAmount = createFigures();
-restoreFigures(elAmount);
+refreshFigures();
 
-refresh.onclick = () => {
+refresh.onclick = () => refreshFigures();
+
+innerBank.onmousedown = () => {
+    innerBank.innerHTML = 'Put in!';
+    document.onmouseup = () => innerBank.innerHTML = '';
+};
+
+function refreshFigures() {
     k = 0;
     elAmount = createFigures();
     restoreFigures(elAmount);
-};
-
-innerBox.onmousedown = () => {
-    innerBox.innerHTML = 'Put in!';
-    document.onmouseup = () => innerBox.innerHTML = '';
-};
+}
 
 function createFigures() {
     assorty.innerHTML = '';
+
+    const colNames = [];
+    for (let key in colors) {
+        colNames.push(key);
+    }
+    shuffle(colNames);
+    shuffle(figNames);
 
     if (+figAmount.value < figAmount.min) figAmount.value = figAmount.min;
     if (+figAmount.value > figAmount.max) figAmount.value = figAmount.max;
     const n = figAmount.value;
 
-    for (let i = 1; i <= n; i++) {
+    for (let i = 0; i < n; i++) {
         let fig = document.createElement('div');
-        fig.id = 'base-elem' + i;
+        fig.id = figNames[i];
         fig.className = 'figure';
         fig.insertAdjacentHTML('afterbegin', '<p><b>Move and put!</b></p>');
-        fig.insertAdjacentHTML('beforeend', '<p class="base-info">(Not moved)</p>');
+        fig.insertAdjacentHTML('beforeend', '<p class="figure-info">(Not moved)</p>');
         assorty.append(fig);
+
+        // Новый стайл-документ для применения рандомного цвета к псевдоэлементам
+        let colorStyle = document.createElement('style');
+        colorStyle.innerHTML = `#${fig.id}::after {
+            background-color: ${colors[colNames[i]]};
+        }`;
+        document.querySelector('head').append(colorStyle);
     }
 
     return n;
@@ -56,12 +80,13 @@ function restoreFigures(n) {
     const FIG_WIDTH = parseInt(getComputedStyle(document.querySelector('.figure')).width);
     const figures = assorty.querySelectorAll('.figure');
     const space = (n > 1) ? ((docWidth - FIG_WIDTH * n) / (n - 1)) : 0;
-    //console.log(figures);
+    let putPermission = null;
+    let colorChangeTimer = null;
 
     for (let figure of figures) {
         k++;
-        const baseInfo = figure.querySelector('.base-info');
-        baseInfo.innerHTML = '(Not moved)';
+        const figureInfo = figure.querySelector('.figure-info');
+        figureInfo.innerHTML = '(Not moved)';
 
         if (figure.classList.contains('put-in')) figure.classList.remove('put-in');
 
@@ -76,103 +101,104 @@ function restoreFigures(n) {
     }
 
     function dragAndDrop(event) {
-        const elem = event.target.closest('.figure');
-        const baseInfo = elem.querySelector('.base-info');
-        let elemRect = elem.getBoundingClientRect();
-        let xOnElem = event.clientX - elemRect.left;
-        let yOnElem = event.clientY - elemRect.top;
-        let currentDropElem = null;
+        const innerBankRect = innerBank.getBoundingClientRect();
+        const figure = event.target.closest('.figure');
+        const figureInfo = figure.querySelector('.figure-info');
+        const figureRect = figure.getBoundingClientRect();
+        const figureShiftX = event.clientX - figureRect.left;
+        const figureShiftY = event.clientY - figureRect.top;
+        putPermission = false;
     
-        elem.style.zIndex = 999;
-        elem.style.filter = 'brightness(90%)';
-        elem.style.cursor = 'grabbing';
-        assorty.append(elem);
+        figure.style.zIndex = 10;
+        figure.style.filter = 'brightness(90%)';
+        figure.style.cursor = 'grabbing';
+        assorty.append(figure);
     
         moveAt(event.pageX, event.pageY);
     
         document.addEventListener('mousemove', onMouseMove);
     
-        elem.onmouseup = onMouseUp;
+        figure.onmouseup = onMouseUp;
     
         // Защита при отжатии кнопки мыши за окном - при следующих нажатиях ничего не происходит,
         // пока функция не будет снова назначена при отжатии кнопки мыши на элементе
-        elem.onmousedown = null;
+        figure.onmousedown = null;
     
         function moveAt(pageX, pageY) {
-            let x = pageX - xOnElem;
-            if (x < 0) x = 0;
-            if (x > docWidth - elemRect.width) x = docWidth - elemRect.width;
-            elem.style.left = x + 'px';
+            let x = pageX - figureShiftX;
+            if (x < -(figureRect.width / 2)) x = -(figureRect.width / 2);
+            if (x > docWidth - figureRect.width / 2) x = docWidth - figureRect.width / 2;
+            figure.style.left = x + 'px';
     
-            let y = pageY - yOnElem;
-            if (y < 0) y = 0;
-            if (y > docHeight - elemRect.height) y = docHeight - elemRect.height;
-            elem.style.top = y + 'px';
+            let y = pageY - figureShiftY;
+            if (y < -(figureRect.height / 2)) y = -(figureRect.height / 2);
+            if (y > docHeight - figureRect.height / 2) y = docHeight - figureRect.height / 2;
+            figure.style.top = y + 'px';
         }
         
         function onMouseMove(event) {
             moveAt(event.pageX, event.pageY);
-            baseInfo.innerHTML = event.pageX + ':' + event.pageY;
-    
-            elem.hidden = true;
-            let elemBelow = document.elementFromPoint(event.clientX, event.clientY);
-            elem.hidden = false;
-    
-            if (!elemBelow) return;
-    
-            let dropElemBelow = elemBelow.closest('#inner-box');
-    
-            if (currentDropElem != dropElemBelow) {
-                if (currentDropElem) {
-                    leaveDroppable(currentDropElem);
+            figureInfo.innerHTML = event.pageX + ':' + event.pageY;
+
+            if (
+                event.clientX >= innerBankRect.left && event.clientX <= (innerBankRect.left + innerBankRect.width) &&
+                event.clientY >= innerBankRect.top && event.clientY <= (innerBankRect.top + innerBankRect.height)
+            ) {
+                if (!putPermission) {
+                    enterBank(innerBank);
+                    putPermission = true;
                 }
-                currentDropElem = dropElemBelow;
-                if (currentDropElem) {
-                    enterDroppable(currentDropElem);
+            } else {
+                if (putPermission) {
+                    leaveBank(innerBank);
+                    putPermission = false;
                 }
             }
         }
-    
-        function leaveDroppable(dropElem) {
-            dropElem.style.backgroundColor = '';
+
+        function enterBank(putElem) {
+            putElem.style.backgroundColor = '#634186';
         }
     
-        function enterDroppable(dropElem) {
-            dropElem.style.backgroundColor = '#634186';
+        function leaveBank(putElem) {
+            putElem.style.backgroundColor = '';
         }
     
         function onMouseUp() {
             document.removeEventListener('mousemove', onMouseMove);
-            elem.onmouseup = null;
-            elem.style.filter = '';
-            elem.style.cursor = 'grab';
+            figure.onmouseup = null;
+            figure.style.filter = '';
+            figure.style.cursor = 'grab';
     
-            if (currentDropElem) {
-                const innerBoxRect = innerBox.getBoundingClientRect();
-                const elemRect = elem.getBoundingClientRect();
-                let x = innerBoxRect.left + innerBoxRect.width / 2 - elemRect.width / 2;
-                let y = innerBoxRect.top + innerBoxRect.height / 2 - elemRect.height / 2;
-                elem.style.left = x + 'px';
-                elem.style.top = y + 'px';
+            if (putPermission) {
+                clearTimeout(colorChangeTimer);
 
-                leaveDroppable(currentDropElem);
-                currentDropElem.style.backgroundColor = '#d1eaff';
-                baseInfo.innerHTML = 'Whoooaaaaaa!';
-                elem.classList.add('put-in');
+                let x = innerBankRect.left + innerBankRect.width / 2 - figureRect.width / 2;
+                let y = innerBankRect.top + innerBankRect.height / 2 - figureRect.height / 2;
+                figure.style.left = x + 'px';
+                figure.style.top = y + 'px';
+
+                leaveBank(innerBank);
+                innerBank.style.backgroundColor = '#d1eaff';
+
+                figureInfo.innerHTML = 'Whoooaaaaaa!';
+                figure.classList.add('put-in');
                 const transTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in')).transitionDuration) * 1000;
-                k--;
+                putPermission = false;
 
                 setTimeout(() => {
-                    elem.hidden = true;
-                    currentDropElem.style.backgroundColor = '';
+                    figure.hidden = true;
 
-                    if (!k) {
-                        setTimeout(() => showRestoreQuestion(), 200);
-                    }
+                    k--;
+                    if (!k) setTimeout(() => showRestoreQuestion(), 200);
+                }, transTime);
+
+                colorChangeTimer = setTimeout(() => {
+                    if (!putPermission) innerBank.style.backgroundColor = '';
                 }, transTime);
             } else {
-                elem.onmousedown = dragAndDrop; // Снова назначить функцию на нажатие, чтобы снять защиту
-                baseInfo.innerHTML = '(Stopped)';
+                figure.onmousedown = dragAndDrop; // Снова назначить функцию на нажатие, чтобы снять защиту
+                figureInfo.innerHTML = '(Stopped)';
             }
         }
     
@@ -180,8 +206,24 @@ function restoreFigures(n) {
             if (confirm('Restore elements?')) restoreFigures(elAmount)
             else {
                 alert('Bye-bye!');
-                document.body.innerHTML = '';
-                document.body.style.backgroundColor = 'black';
+
+                let endScreen = document.createElement('div');
+                endScreen.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    background-color: #000;
+                    position: absolute;
+                    top: -100%;
+                    z-index: 100;
+                    transition: 1000ms ease-in-out;
+                `;
+                document.body.append(endScreen);
+
+                setTimeout(() => endScreen.style.top = 0, 0);
+                setTimeout(() => {
+                    document.body.innerHTML = '';
+                    document.body.style.background = '#000';
+                }, 1000);
             }
         }
     }

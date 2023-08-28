@@ -11,9 +11,14 @@ html {
 body {
     width: 100%;
     height: 100%;
+    background: linear-gradient(to bottom, #ffe3f3 0%, #ffeef7 5%, #ffe3f3 10%, #ffeef7 15%,
+        #ffe3f3 20%, #ffeef7 25%, #ffe3f3 30%, #ffeef7 35%, #ffe3f3 40%, #ffeef7 45%,
+        #ffe3f3 50%, #ffeef7 55%, #ffe3f3 60%, #ffeef7 65%, #ffe3f3 70%, #ffeef7 75%,
+        #ffe3f3 80%, #ffeef7 85%, #ffe3f3 90%, #ffeef7 95%, #ffe3f3 100%);
+    overflow: hidden;
 }
 
-#box {
+#bank {
     width: 400px;
     height: 300px;
     position: relative;
@@ -22,31 +27,30 @@ body {
     background-color: #f0f8ff;
     text-align: center;
     font-size: 15pt;
-    color: rgb(25, 216, 152);
+    color: #19d898;
     -webkit-text-stroke: 1px #523c0d;
     border: 20px solid #72561a;
     box-sizing: border-box;
 }
 
-#box h2 {
+#bank h2 {
     background-color: #e7ca94;
     height: 40px;
     line-height: 40px;
+    border-bottom: 10px solid #72561a;
 }
 
-#inner-box {
+#inner-bank {
     width: 100%;
-    height: calc(100% - 40px);
+    height: calc(100% - 50px);
     color: #ffe600;
     line-height: 210px;
     font-size: 20pt;
-    border-top: 10px solid #72561a;
-    box-sizing: border-box;
     cursor: pointer;
     user-select: none;
 }
 
-#inner-box:hover {
+#inner-bank:hover {
     background-color: #d1eaff;
 }
 
@@ -73,94 +77,143 @@ body {
     width: 64px;
     height: 24px;
     margin-left: 10px;
-    background-color: #d1eaff;
+    background-color: #5bdfb3;
 }
 
 .figure {
     position: absolute;
-    height: 300px;
-    width: 300px; /* Считывается константой FIG_WIDTH в скрипте */
+    height: 200px;
+    width: 200px; /* Считывается константой FIG_WIDTH в скрипте */
+    background: linear-gradient(to top right, #315366 0%, #5c98bb 50%, #315366 100%); /* Общий цвет границы */
     color:#315366;
-    font-size: 24pt;
+    font-size: 18pt;
     cursor: grab;
     user-select: none;
 }
-
-#base-elem1 {
-    clip-path: circle(50% at 50% 50%);
-    -webkit-clip-path: circle(50% at 50% 50%);
-    background-color: #315366;
-}
-
-#base-elem1::before {
-    content: "";
-    position: absolute;
-    clip-path: circle(50% at 50% 50%);
-    -webkit-clip-path: circle(50% at 50% 50%);
-    background-color: #ff6ec7;
-    top: 3px;
-    left: 3px;
-    right: 3px;
-    bottom: 3px;
-}
-
-#base-elem2 {
-    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
-    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
-    background-color: #315366;
-}
-
-#base-elem2::before {
-    content: "";
-    position: absolute;
-    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
-    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
-    background-color: #fbff00;
-    top: 3px;
-    left: 3px;
-    right: 3px;
-    bottom: 3px;
-}
-
-#base-elem3 {
-    clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
-    -webkit-clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
-    background-color: #315366;
-}
-
-#base-elem3::before {
-    content: "";
-    position: absolute;
-    clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
-    -webkit-clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
-    background-color: #65ff57;
-    top: 3px;
-    left: 3px;
-    right: 3px;
-    bottom: 3px;
-}
-
 .figure > p {
     position: relative;
-    top: 120px;
+    top: 72px;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
     text-align: center;
     z-index: 1;
 }
-
-#base-elem3 > p {
-    width: 150px;
-    left: calc(50% - 150px/2);
-    top: 140px;
+.figure-info {
+    margin-top: 10px;
+    font-size: 15pt;
+    opacity: 0.7;
 }
 
-.base-info {
-    margin-top: 10px;
-    font-size: 18pt;
-    opacity: 0.7;
+#square {
+    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    
+}
+#square::after {
+    content: "";
+    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+    
+}
+
+#triangle {
+    -webkit-clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
+    clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
+}
+#triangle::after {
+    content: "";
+    -webkit-clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
+    clip-path: polygon(0 100%, 50% 0, 50% 0, 100% 100%);
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 3px;
+}
+#triangle > p {
+    width: 150px;
+    left: calc(50% - 150px/2);
+    top: 106px;
+}
+
+#circle {
+    -webkit-clip-path: circle(50% at 50% 50%);
+    clip-path: circle(50% at 50% 50%);
+}
+#circle::after {
+    content: "";
+    -webkit-clip-path: circle(50% at 50% 50%);
+    clip-path: circle(50% at 50% 50%);
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+}
+
+#rectangle {
+    height: 260px;
+    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+}
+#rectangle::after {
+    content: "";
+    -webkit-clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    clip-path: polygon(0 100%, 0 0, 100% 0, 100% 100%);
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+}
+#rectangle > p {
+    top: 100px;
+}
+
+#ellipse {
+    height: 260px;
+    -webkit-clip-path: ellipse(50% 50% at 50% 50%);
+    clip-path: ellipse(50% 50% at 50% 50%);
+}
+#ellipse::after {
+    content: "";
+    -webkit-clip-path: ellipse(50% 50% at 50% 50%);
+    clip-path: ellipse(50% 50% at 50% 50%);
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+}
+#ellipse > p {
+    top: 100px;
+}
+
+#rhombus {
+    height: 260px;
+    -webkit-clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    background-color: #315366;
+}
+#rhombus::after {
+    content: "";
+    -webkit-clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+}
+#rhombus > p {
+    top: 100px;
 }
 
 .put-in {
     transform: rotate(4turn) scale(0);
-    transition: 0.8s ease-in 50ms;
+    transition: 800ms ease-in 50ms;
 }
