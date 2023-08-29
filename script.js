@@ -21,9 +21,9 @@ let putTimer = null;
 let finalPutTimer = null;
 let muteAudio = null;
 let muteSpeaker = false;
-let currentSound;
-let k; // Подсчёт элементов
+let currentAudio;
 let elAmount;
+let k; // Подсчёт элементов
 
 refreshFigures();
 
@@ -45,7 +45,7 @@ soundSwitch.onclick = () => {
     } else {
         soundSwitch.style.backgroundColor = '#f14646';
         speaker.src = 'images/speaker_mute.png';
-        currentSound.muted = true;
+        currentAudio.muted = true;
         muteSpeaker = true;
     }
 };
@@ -114,7 +114,7 @@ function arrangeFigures(n) {
     let putPermission = null;
     let colorChangeTimer = null;
 
-    currentSound = playSound('sounds/Start.wav');
+    currentAudio = playSound('sounds/Start.wav');
 
     for (let figure of figures) {
         k++;
@@ -211,7 +211,7 @@ function arrangeFigures(n) {
                 let indexes = [0, 1, 2];
                 if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
                 shuffle(indexes);
-                currentSound = playSound(whoaSounds[indexes[0]]);
+                currentAudio = playSound(whoaSounds[indexes[0]]);
                 lastWhoaIndex = indexes[0];
 
                 let x = innerBankRect.left + innerBankRect.width / 2 - figureRect.width / 2;
@@ -232,7 +232,7 @@ function arrangeFigures(n) {
                     k--;
 
                     if (!k) finalPutTimer = setTimeout(() => {
-                        currentSound = muteAudio = playSound('sounds/Win.wav');
+                        currentAudio = muteAudio = playSound('sounds/Win.wav');
                         setTimeout(showRestoreQuestion, 10);
                     }, 200);
                 }, transTime);
@@ -250,7 +250,7 @@ function arrangeFigures(n) {
             if (confirm('Restore elements?')) arrangeFigures(elAmount)
             else {
                 alert('Bye-bye!');
-                currentSound = playSound('sounds/End.wav');
+                currentAudio = playSound('sounds/End.wav');
 
                 let endScreen = document.createElement('div');
                 endScreen.style.cssText = `
@@ -281,8 +281,9 @@ function arrangeFigures(n) {
             }, 50);
     
             let sound = new Audio(audioSource);
+            sound.preload = true;
             sound.play();
-    
+
             return sound;
         }
     }
