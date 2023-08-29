@@ -220,15 +220,24 @@ body {
 }
 
 #sound-switch {
+    width: 66px;
+    height: 66px;
     position: absolute;
     right: 10px;
     top: 10px;
     background-color: #5bdfb3;
     border: 1px solid #72561a;
+    box-sizing: border-box;
     cursor: pointer;
 }
 
 #sound-switch:hover {
     filter: brightness(1.1) saturate(1.2);
     border: 1px solid #a17a25;
+}
+
+@media screen and (max-width: 1200px) {
+    #sound-switch {
+        left: 1124px;
+    }
 }
