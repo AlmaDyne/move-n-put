@@ -6,6 +6,7 @@ const innerBank = document.getElementById('inner-bank');
 const figAmount = document.getElementById('figures-amount');
 const assorty = document.getElementById('assorted-figures');
 const refresh = document.getElementById('refresh-button');
+const soundSwitch = document.getElementById('sound-switch');
 const docHeight = Math.max(
     document.body.scrollHeight, document.documentElement.scrollHeight,
     document.body.offsetHeight, document.documentElement.offsetHeight,
@@ -16,15 +17,11 @@ const docWidth = Math.max(
     document.body.offsetWidth, document.documentElement.offsetWidth,
     document.body.clientWidth, document.documentElement.clientWidth
 );
-const figNames = ['square', 'triangle', 'circle', 'rectangle', 'ellipse', 'rhombus'];
-const colors = {
-    yellow: '#fbff00',
-    green: '#65ff57',
-    pink: '#ff6ec7',
-    blue: '#6d77ff',
-    brown: '#ffb03b',
-    skyblue: '#7affff'
-};
+let putTimer = null;
+let finalPutTimer = null;
+let muteAudio = null;
+let muteSpeaker = false;
+let currentSound;
 let k; // Подсчёт элементов
 let elAmount;
 
@@ -37,13 +34,41 @@ innerBank.onmousedown = () => {
     document.onmouseup = () => innerBank.innerHTML = '';
 };
 
+
+soundSwitch.onclick = () => {
+    const speaker = document.getElementById('speaker');
+
+    if (muteSpeaker) {
+        soundSwitch.style.backgroundColor = '#5bdfb3';
+        speaker.src = 'images/speaker.png';
+        muteSpeaker = false;
+    } else {
+        soundSwitch.style.backgroundColor = '#f14646';
+        speaker.src = 'images/speaker_mute.png';
+        currentSound.muted = true;
+        muteSpeaker = true;
+    }
+};
+
 function refreshFigures() {
     k = 0;
     elAmount = createFigures();
-    restoreFigures(elAmount);
+    arrangeFigures(elAmount);
 }
 
 function createFigures() {
+    const figNames = ['square', 'triangle', 'circle', 'rectangle', 'ellipse', 'rhombus'];
+    const colors = {
+        yellow: '#fbff00',
+        green: '#65ff57',
+        pink: '#ff6ec7',
+        blue: '#6d77ff',
+        brown: '#ffb03b',
+        skyblue: '#7affff'
+    };
+
+    clearTimeout(putTimer);
+    clearTimeout(finalPutTimer);
     assorty.innerHTML = '';
 
     const colNames = [];
@@ -76,12 +101,20 @@ function createFigures() {
     return n;
 }
 
-function restoreFigures(n) {
+function arrangeFigures(n) {
     const FIG_WIDTH = parseInt(getComputedStyle(document.querySelector('.figure')).width);
     const figures = assorty.querySelectorAll('.figure');
     const space = (n > 1) ? ((docWidth - FIG_WIDTH * n) / (n - 1)) : 0;
+    const whoaSounds = [
+        'sounds/Whooaaaaa-1.wav',
+        'sounds/Whooaaaaa-2.wav',
+        'sounds/Whooaaaaa-3.wav'
+    ];
+    let lastWhoaIndex = null;
     let putPermission = null;
     let colorChangeTimer = null;
+
+    currentSound = playSound('sounds/Start.wav');
 
     for (let figure of figures) {
         k++;
@@ -93,7 +126,8 @@ function restoreFigures(n) {
         figure.style.top = '';
         figure.style.bottom = 0;
         figure.style.right = '';
-        figure.style.left = (n == 1) ? `calc(50% - ${FIG_WIDTH}px / 2)` : ((space + FIG_WIDTH) * (k - 1) + 'px');
+        figure.style.left = (n == 1) ? `calc(50% - ${FIG_WIDTH}px / 2)` :
+            ((space + FIG_WIDTH) * (k - 1) + 'px');
         
         figure.onmousedown = dragAndDrop;
         figure.ondragstart = () => false;
@@ -172,6 +206,13 @@ function restoreFigures(n) {
     
             if (putPermission) {
                 clearTimeout(colorChangeTimer);
+                
+                // Аудиоблок рандомных Whooaaaaa при попадании фигуры в банк
+                let indexes = [0, 1, 2];
+                if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
+                shuffle(indexes);
+                currentSound = playSound(whoaSounds[indexes[0]]);
+                lastWhoaIndex = indexes[0];
 
                 let x = innerBankRect.left + innerBankRect.width / 2 - figureRect.width / 2;
                 let y = innerBankRect.top + innerBankRect.height / 2 - figureRect.height / 2;
@@ -186,11 +227,14 @@ function restoreFigures(n) {
                 const transTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in')).transitionDuration) * 1000;
                 putPermission = false;
 
-                setTimeout(() => {
+                putTimer = setTimeout(() => {
                     figure.hidden = true;
-
                     k--;
-                    if (!k) setTimeout(() => showRestoreQuestion(), 200);
+
+                    if (!k) finalPutTimer = setTimeout(() => {
+                        currentSound = muteAudio = playSound('sounds/Win.wav');
+                        setTimeout(showRestoreQuestion, 10);
+                    }, 200);
                 }, transTime);
 
                 colorChangeTimer = setTimeout(() => {
@@ -203,9 +247,10 @@ function restoreFigures(n) {
         }
     
         function showRestoreQuestion() {
-            if (confirm('Restore elements?')) restoreFigures(elAmount)
+            if (confirm('Restore elements?')) arrangeFigures(elAmount)
             else {
                 alert('Bye-bye!');
+                currentSound = playSound('sounds/End.wav');
 
                 let endScreen = document.createElement('div');
                 endScreen.style.cssText = `
@@ -223,8 +268,22 @@ function restoreFigures(n) {
                 setTimeout(() => {
                     document.body.innerHTML = '';
                     document.body.style.background = '#000';
-                }, 1000);
+                }, 3524); // Равняется длительности аудио End.wav
             }
+        }
+    }
+    
+    function playSound(audioSource) {
+        if (!muteSpeaker) {
+            if (muteAudio) setTimeout(() => {
+                muteAudio.pause();
+                muteAudio = null;
+            }, 50);
+    
+            let sound = new Audio(audioSource);
+            sound.play();
+    
+            return sound;
         }
     }
 }

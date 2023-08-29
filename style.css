@@ -10,6 +10,7 @@ html {
 
 body {
     width: 100%;
+    min-width: 1200px;
     height: 100%;
     background: linear-gradient(to bottom, #ffe3f3 0%, #ffeef7 5%, #ffe3f3 10%, #ffeef7 15%,
         #ffe3f3 20%, #ffeef7 25%, #ffe3f3 30%, #ffeef7 35%, #ffe3f3 40%, #ffeef7 45%,
@@ -27,7 +28,7 @@ body {
     background-color: #f0f8ff;
     text-align: center;
     font-size: 15pt;
-    color: #19d898;
+    color: #5bdfb3;
     -webkit-text-stroke: 1px #523c0d;
     border: 20px solid #72561a;
     box-sizing: border-box;
@@ -215,5 +216,19 @@ body {
 
 .put-in {
     transform: rotate(4turn) scale(0);
-    transition: 800ms ease-in 50ms;
+    transition: 750ms ease-in 50ms;
+}
+
+#sound-switch {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background-color: #5bdfb3;
+    border: 1px solid #72561a;
+    cursor: pointer;
+}
+
+#sound-switch:hover {
+    filter: brightness(1.1) saturate(1.2);
+    border: 1px solid #a17a25;
 }

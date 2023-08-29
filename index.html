@@ -6,15 +6,18 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <div id="bank">
-            <h2>Reliable Bank</h2>
-            <div id="inner-bank"></div>
-        </div>
         <div class="amount-wrap">
             <label for="figures-amount">Figures Amount</label>
             <input id="figures-amount" type="number" value="5" min="1" max="6">
             <button id="refresh-button"><b>Refresh</b></button>
         </div>
+        <div id="bank">
+            <h2>Reliable Bank</h2>
+            <div id="inner-bank"></div>
+        </div>
+        <button id="sound-switch">
+            <img id="speaker" src="images/speaker.png" alt="speaker" width="64px">
+        </button>
         <div id="assorted-figures"></div>
         <script src="script.js" type="module"></script>
     </body>
