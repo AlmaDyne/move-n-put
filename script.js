@@ -233,7 +233,7 @@ function arrangeFigures(n) {
 
                     if (!k) finalPutTimer = setTimeout(() => {
                         currentAudio = muteAudio = playSound('sounds/Win.wav');
-                        setTimeout(showRestoreQuestion, 10);
+                        setTimeout(showRestoreQuestion, 20);
                     }, 200);
                 }, transTime);
 
