@@ -219,6 +219,11 @@ body {
     transition: 750ms ease-in 50ms;
 }
 
+#speaker {
+    width: 64px;
+    height: 64px;
+}
+
 #sound-switch {
     width: 66px;
     height: 66px;

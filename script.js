@@ -106,15 +106,15 @@ function arrangeFigures(n) {
     const figures = assorty.querySelectorAll('.figure');
     const space = (n > 1) ? ((docWidth - FIG_WIDTH * n) / (n - 1)) : 0;
     const whoaSounds = [
-        'sounds/Whooaaaaa-1.wav',
-        'sounds/Whooaaaaa-2.wav',
-        'sounds/Whooaaaaa-3.wav'
+        'sounds/Whooaaaaa-1.mp3',
+        'sounds/Whooaaaaa-2.mp3',
+        'sounds/Whooaaaaa-3.mp3'
     ];
     let lastWhoaIndex = null;
     let putPermission = null;
     let colorChangeTimer = null;
 
-    currentAudio = playSound('sounds/Start.wav');
+    currentAudio = playSound('sounds/Start.mp3');
 
     for (let figure of figures) {
         k++;
@@ -232,7 +232,7 @@ function arrangeFigures(n) {
                     k--;
 
                     if (!k) finalPutTimer = setTimeout(() => {
-                        currentAudio = muteAudio = playSound('sounds/Win.wav');
+                        currentAudio = muteAudio = playSound('sounds/Win.mp3');
                         setTimeout(showRestoreQuestion, 20);
                     }, 200);
                 }, transTime);
@@ -250,7 +250,7 @@ function arrangeFigures(n) {
             if (confirm('Restore elements?')) arrangeFigures(elAmount)
             else {
                 alert('Bye-bye!');
-                currentAudio = playSound('sounds/End.wav');
+                currentAudio = playSound('sounds/End.mp3');
 
                 let endScreen = document.createElement('div');
                 endScreen.style.cssText = `
@@ -268,7 +268,7 @@ function arrangeFigures(n) {
                 setTimeout(() => {
                     document.body.innerHTML = '';
                     document.body.style.background = '#000';
-                }, 3524); // Равняется длительности аудио End.wav
+                }, 3524); // Равняется длительности аудио End.mp3
             }
         }
     }
