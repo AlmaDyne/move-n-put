@@ -27,28 +27,44 @@ let k; // Подсчёт элементов
 
 refreshFigures();
 
-refresh.onclick = () => refreshFigures();
+refresh.onclick = refreshFigures;
+refresh.touchstart = refreshFigures;
 
-innerBank.onmousedown = () => {
+innerBank.onmousedown = innerBankStart;
+innerBank.touchstart = innerBankStart;
+
+function innerBankStart() {
     innerBank.innerHTML = 'Put in!';
-    document.onmouseup = () => innerBank.innerHTML = '';
-};
+    innerBank.onmouseenter = () => innerBank.innerHTML = 'Put in!';
+    innerBank.onmouseleave = () => innerBank.innerHTML = '';
+    document.onmouseup = innerBankEnd;
+    document.touchend = innerBankEnd;
 
+    function innerBankEnd() {
+        innerBank.innerHTML = '';
+        innerBank.onmouseenter = null;
+        innerBank.onmouseleave = null;
+        document.onmouseup = null;
+    }
+}
 
-soundSwitch.onclick = () => {
+soundSwitch.onclick = soundSwitching;
+soundSwitch.touchstart = soundSwitching;
+
+function soundSwitching() {
     const speaker = document.getElementById('speaker');
 
     if (muteSpeaker) {
-        soundSwitch.style.backgroundColor = '#5bdfb3';
+        this.style.backgroundColor = '#5bdfb3';
         speaker.src = 'images/speaker.png';
         muteSpeaker = false;
     } else {
-        soundSwitch.style.backgroundColor = '#f14646';
+        this.style.backgroundColor = '#f14646';
         speaker.src = 'images/speaker_mute.png';
         currentAudio.muted = true;
         muteSpeaker = true;
     }
-};
+}
 
 function refreshFigures() {
     k = 0;
@@ -103,6 +119,7 @@ function createFigures() {
 
 function arrangeFigures(n) {
     const FIG_WIDTH = parseInt(getComputedStyle(document.querySelector('.figure')).width);
+    const SPEED_MEASURE_INTERVAL = 100; 
     const figures = assorty.querySelectorAll('.figure');
     const space = (n > 1) ? ((docWidth - FIG_WIDTH * n) / (n - 1)) : 0;
     const whoaSounds = [
@@ -110,9 +127,12 @@ function arrangeFigures(n) {
         'sounds/Whooaaaaa-2.mp3',
         'sounds/Whooaaaaa-3.mp3'
     ];
+    let putPermission = false;
+    let lastPuttedBeforePause = null;
     let lastWhoaIndex = null;
-    let putPermission = null;
-    let colorChangeTimer = null;
+
+    innerBank.style.backgroundColor = '';
+    innerBank.innerHTML = '';
 
     currentAudio = playSound('sounds/Start.mp3');
 
@@ -130,6 +150,7 @@ function arrangeFigures(n) {
             ((space + FIG_WIDTH) * (k - 1) + 'px');
         
         figure.onmousedown = dragAndDrop;
+        figure.touchstart = dragAndDrop;
         figure.ondragstart = () => false;
         figure.hidden = false;
     }
@@ -138,75 +159,109 @@ function arrangeFigures(n) {
         const innerBankRect = innerBank.getBoundingClientRect();
         const figure = event.target.closest('.figure');
         const figureInfo = figure.querySelector('.figure-info');
-        const figureRect = figure.getBoundingClientRect();
-        const figureShiftX = event.clientX - figureRect.left;
-        const figureShiftY = event.clientY - figureRect.top;
+        let figureRect = figure.getBoundingClientRect();
+        let figX1 = figureRect.left;
+        let figY1 = figureRect.top;
+        let figX2 = figX1;
+        let figY2 = figY1;
+        const figureShiftX = event.clientX - figX1;
+        const figureShiftY = event.clientY - figY1;
+        const PUT_MESSAGE = 'Whoooaaaaaa!';
+        let x1, y1, x2, y2, t1, t2, tInterval, distance, speed;
+        let speedMeasureTimer = null;
+
+        innerBank.onmousedown = null;
+        innerBank.touchstart = null;
         putPermission = false;
     
         figure.style.zIndex = 10;
         figure.style.filter = 'brightness(90%)';
         figure.style.cursor = 'grabbing';
         assorty.append(figure);
-    
-        moveAt(event.pageX, event.pageY);
-    
+
+        t1 = t2 = Date.now();
+        x1 = x2 = event.clientX;
+        y1 = y2 = event.clientY;
+        moveAt(x1, y1);
+        detectLocation(x1, y1);
+
+        innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
+        innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
+        
         document.addEventListener('mousemove', onMouseMove);
-    
+        document.addEventListener('touchmove', onMouseMove);
         figure.onmouseup = onMouseUp;
-    
+        figure.touchend = onMouseUp;
         // Защита при отжатии кнопки мыши за окном - при следующих нажатиях ничего не происходит,
         // пока функция не будет снова назначена при отжатии кнопки мыши на элементе
         figure.onmousedown = null;
+        figure.touchstart = null;
+
+        calcSpeed = calcSpeed.bind(this);
+
+        speedMeasureTimer = setInterval(() => {
+            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+
+            innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
+            
+            if ((x1 != x2) || (y1 != y2)) { // Если указатель мыши двигается
+                if ((figX1 != figX2) || (figY1 != figY2)) { // Если фигура двигается
+                    calcSpeed();
+                    innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
+                } else {
+                    t1 = Date.now();
+                    innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
+                }
+            }
+            else { // Если никакого движения нет
+                detectLocation(x2, y2);
+                t1 = Date.now();
+                innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
+
+            }
+        }, SPEED_MEASURE_INTERVAL);
+
+        console.log('\nBegin speed measurement:');
     
-        function moveAt(pageX, pageY) {
-            let x = pageX - figureShiftX;
+        function moveAt(clientX, clientY) {
+            let x = clientX - figureShiftX;
             if (x < -(figureRect.width / 2)) x = -(figureRect.width / 2);
             if (x > docWidth - figureRect.width / 2) x = docWidth - figureRect.width / 2;
             figure.style.left = x + 'px';
     
-            let y = pageY - figureShiftY;
+            let y = clientY - figureShiftY;
             if (y < -(figureRect.height / 2)) y = -(figureRect.height / 2);
             if (y > docHeight - figureRect.height / 2) y = docHeight - figureRect.height / 2;
             figure.style.top = y + 'px';
         }
         
         function onMouseMove(event) {
-            moveAt(event.pageX, event.pageY);
-            figureInfo.innerHTML = event.pageX + ':' + event.pageY;
+            x2 = event.clientX;
+            y2 = event.clientY;
+            figureInfo.innerHTML = x2 + ':' + y2;
+            moveAt(x2, y2);
+            detectLocation(x2, y2);
 
-            if (
-                event.clientX >= innerBankRect.left && event.clientX <= (innerBankRect.left + innerBankRect.width) &&
-                event.clientY >= innerBankRect.top && event.clientY <= (innerBankRect.top + innerBankRect.height)
-            ) {
-                if (!putPermission) {
-                    enterBank(innerBank);
-                    putPermission = true;
-                }
-            } else {
-                if (putPermission) {
-                    leaveBank(innerBank);
-                    putPermission = false;
-                }
-            }
-        }
-
-        function enterBank(putElem) {
-            putElem.style.backgroundColor = '#634186';
+            figureRect = figure.getBoundingClientRect();
+            figX2 = figureRect.left;
+            figY2 = figureRect.top;
         }
     
-        function leaveBank(putElem) {
-            putElem.style.backgroundColor = '';
-        }
-    
-        function onMouseUp() {
+        function onMouseUp(event) {
+            clearInterval(speedMeasureTimer);
             document.removeEventListener('mousemove', onMouseMove);
             figure.onmouseup = null;
+            figure.touchend = null;
             figure.style.filter = '';
             figure.style.cursor = 'grab';
+
+            console.log('-----Final calculations-----');
+            x2 = event.clientX;
+            y2 = event.clientY;
+            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+            calcSpeed();
     
             if (putPermission) {
-                clearTimeout(colorChangeTimer);
-                
                 // Аудиоблок рандомных Whooaaaaa при попадании фигуры в банк
                 let indexes = [0, 1, 2];
                 if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
@@ -219,33 +274,96 @@ function arrangeFigures(n) {
                 figure.style.left = x + 'px';
                 figure.style.top = y + 'px';
 
-                leaveBank(innerBank);
                 innerBank.style.backgroundColor = '#d1eaff';
-
-                figureInfo.innerHTML = 'Whoooaaaaaa!';
+                innerBank.innerHTML = PUT_MESSAGE;
+                figureInfo.innerHTML = '(Putted)';
+                figure.style.zIndex = '';
                 figure.classList.add('put-in');
-                const transTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in')).transitionDuration) * 1000;
+                lastPuttedBeforePause = figure;
                 putPermission = false;
+
+                const transitionTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in'))
+                    .transitionDuration) * 1000;
 
                 putTimer = setTimeout(() => {
                     figure.hidden = true;
                     k--;
 
+                    if (lastPuttedBeforePause == figure) {
+                        if (putPermission != true) innerBank.style.backgroundColor = '';
+                        if (innerBank.innerHTML == PUT_MESSAGE) innerBank.innerHTML = '';
+                        innerBank.onmousedown = innerBankStart;
+                        innerBank.touchstart = innerBankStart;
+                    }
+
                     if (!k) finalPutTimer = setTimeout(() => {
                         currentAudio = muteAudio = playSound('sounds/Win.mp3');
-                        setTimeout(showRestoreQuestion, 20);
+                        setTimeout(showRestoreQuestion, 10);
                     }, 200);
-                }, transTime);
-
-                colorChangeTimer = setTimeout(() => {
-                    if (!putPermission) innerBank.style.backgroundColor = '';
-                }, transTime);
+                }, transitionTime);
             } else {
+                innerBank.onmousedown = innerBankStart;
+                innerBank.touchstart = innerBankStart;
                 figure.onmousedown = dragAndDrop; // Снова назначить функцию на нажатие, чтобы снять защиту
+                figure.touchstart = dragAndDrop;    // Снова назначить функцию на нажатие, чтобы снять защиту
                 figureInfo.innerHTML = '(Stopped)';
+
+                innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
+                innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
+
+                setTimeout(() => {
+                    if (innerBank.innerHTML != 'Put in!') innerBank.innerHTML = '';
+                }, 0);
             }
         }
-    
+
+        function detectLocation(clientX, clientY) {
+            figure.hidden = true;
+            let elemBelow = document.elementFromPoint(clientX, clientY);
+            figure.hidden = false;
+
+            if (
+                clientX >= innerBankRect.left && clientX <= (innerBankRect.left + innerBankRect.width) &&
+                clientY >= innerBankRect.top && clientY <= (innerBankRect.top + innerBankRect.height)  &&
+                elemBelow == innerBank
+            ) {
+                if (!putPermission) {
+                    enterBank(innerBank);
+                    putPermission = true;
+                }
+            } else {
+                if (putPermission) {
+                    leaveBank(innerBank);
+                    putPermission = false;
+                }
+            }
+
+            function enterBank(putElem) {
+                putElem.style.backgroundColor = '#634186';
+            }
+        
+            function leaveBank(putElem) {
+                putElem.style.backgroundColor = '';
+            }
+        }
+
+        function calcSpeed() {
+            t2 = Date.now();
+            tInterval = t2 - t1;
+            distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            speed = distance / tInterval;
+
+            console.log(this.id + ' | tInterval = ' + tInterval);
+            console.log(this.id + ' | distance = ' + distance);
+            console.log(this.id + ' | speed = ' + speed);
+
+            t1 = t2;
+            x1 = x2;
+            y1 = y2;
+            figX1 = figX2;
+            figY1 = figY2;
+        }
+
         function showRestoreQuestion() {
             if (confirm('Restore elements?')) arrangeFigures(elAmount)
             else {
@@ -280,11 +398,11 @@ function arrangeFigures(n) {
                 muteAudio = null;
             }, 50);
     
-            let sound = new Audio(audioSource);
-            sound.preload = true;
-            sound.play();
+            let audio = new Audio(audioSource);
+            audio.preload = true;
+            audio.play();
 
-            return sound;
+            return audio;
         }
     }
 }

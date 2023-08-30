@@ -42,10 +42,12 @@ body {
 }
 
 #inner-bank {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     height: calc(100% - 50px);
     color: #ffe600;
-    line-height: 210px;
     font-size: 20pt;
     cursor: pointer;
     user-select: none;
