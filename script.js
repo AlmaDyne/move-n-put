@@ -217,7 +217,8 @@ function arrangeFigures() {
         document.addEventListener('scroll', moveFigureOnScroll);
         document.addEventListener('mousemove', moveFigure);
         document.addEventListener('touchmove', moveFigure);
-        docArea.addEventListener('wheel', preventWheel); // Запрет масштабирования при нажатом Control
+        docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
+        document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onmouseup = leaveFigure.bind(this);
         docArea.touchend = leaveFigure.bind(this);
         // Защита при отжатии кнопки мыши за окном - при следующих нажатиях ничего не происходит,
@@ -225,8 +226,12 @@ function arrangeFigures() {
         figure.onmousedown = null;
         figure.touchstart = null;
 
+        console.log('\nBegin speed measurement:');
+
+        calcSpeed = calcSpeed.bind(this);
+
         speedMeasureTimer = setInterval(() => { // this = figure, т. к. стрелочная функция не имеет своего this
-            //console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
 
             innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
             
@@ -247,18 +252,16 @@ function arrangeFigures() {
             }
         }, SPEED_MEASURE_INTERVAL);
 
-        //console.log('\nBegin speed measurement:');
-
         function moveAt(pageX, pageY) {
             let x = pageX - figureShiftX;
             if (x < 0) x = 0;
-            if (x > docWidth - figureRect.width) x = docWidth - figureRect.width;
+            if (x > docWidth - figure.offsetWidth) x = docWidth - figure.offsetWidth;
             x = x * 100 / docWidth;
             figure.style.left = `calc(${x}%)`;
     
             let y = pageY - figureShiftY;
             if (y < 0) y = 0;
-            if (y > docHeight - figureRect.height) y = docHeight - figureRect.height;
+            if (y > docHeight - figure.offsetHeight) y = docHeight - figure.offsetHeight;
             y = y * 100 / docHeight;
             figure.style.top = `calc(${y}%)`;
         }
@@ -280,17 +283,18 @@ function arrangeFigures() {
 
             document.removeEventListener('scroll', moveFigureOnScroll);
             document.removeEventListener('mousemove', moveFigure);
-            docArea.removeEventListener('wheel', preventWheel);
+            docArea.removeEventListener('wheel', preventZoomOnWheel);
+            document.removeEventListener('keydown', preventZoomOnKeys);
             docArea.onmouseup = null;
             docArea.touchend = null;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
 
-            //console.log('-----Final calculations-----');
+            console.log('-----Final calculations-----');
             x2 = event.pageX;
             y2 = event.pageY;
-            //console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
             calcSpeed();
     
             if (putPermission) {
@@ -301,8 +305,9 @@ function arrangeFigures() {
                 currentAudio = playSound(whoaSounds[indexes[0]]);
                 lastWhoaIndex = indexes[0];
 
-                let x = innerBankRect.left + innerBankRect.width / 2 - figureRect.width / 2;
-                let y = innerBankRect.top + innerBankRect.height / 2 - figureRect.height / 2;
+                innerBankRect = getRect(innerBank);
+                let x = innerBankRect.left + innerBankRect.width / 2 - figure.offsetWidth / 2;
+                let y = innerBankRect.top + innerBankRect.height / 2 - figure.offsetHeight / 2;
                 figure.style.left = x + 'px';
                 figure.style.top = y + 'px';
 
@@ -346,12 +351,12 @@ function arrangeFigures() {
 
                 setTimeout(() => {
                     if (innerBank.innerHTML != INNER_BANK_MESSAGE) innerBank.innerHTML = '';
-                }, 0);
+                }, 200);
             }
         }
 
         function getRect(elem) {
-            let rect = elem.getBoundingClientRect();
+            const rect = elem.getBoundingClientRect();
           
             return {
                 left: rect.left + window.pageXOffset,
@@ -361,6 +366,18 @@ function arrangeFigures() {
                 width: rect.width,
                 height: rect.height
             };
+        }
+
+        function preventZoomOnWheel(event) {
+            if (event.ctrlKey) {
+                event.preventDefault();
+            }
+        }
+
+        function preventZoomOnKeys(event) {
+            if (event.ctrlKey && (event.key == '+' || event.key == '-')) {
+                event.preventDefault();
+            }
         }
     
         function moveFigureOnScroll() {
@@ -376,10 +393,6 @@ function arrangeFigures() {
             figureRect = getRect(figure);
             figX2 = figureRect.left;
             figY2 = figureRect.top;
-        }
-
-        function preventWheel(event) {
-            if (event.ctrlKey) event.preventDefault();
         }
 
         function detectLocation(pageX, pageY) {
@@ -420,9 +433,9 @@ function arrangeFigures() {
             distance = Math.sqrt((figX2 - figX1) ** 2 + (figY2 - figY1) ** 2);
             speed = distance / tDelta;
 
-            //console.log(this.id + ' | tDelta = ' + tDelta);
-            //console.log(this.id + ' | distance = ' + distance);
-            //console.log(this.id + ' | speed = ' + speed);
+            console.log(this.id + ' | tDelta = ' + tDelta);
+            console.log(this.id + ' | distance = ' + distance);
+            console.log(this.id + ' | speed = ' + speed);
 
             t1 = t2;
             x1 = x2;
