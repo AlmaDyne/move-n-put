@@ -262,6 +262,21 @@ body {
     top: 100px;
 }
 
+#center-mark {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    background-color: #1eff00;
+    background-color: #d1eaff;
+    border: 1px solid #72561a;
+    border-radius: 50%;
+    z-index: 20;
+}
+
+#center-mark.on-target {
+    background-color: #ff0000;
+}
+
 .put-in {
     transform: rotate(4turn) scale(0);
     transition: 750ms ease-in 50ms;

@@ -8,7 +8,9 @@ const figAmount = document.getElementById('figures-amount');
 const assorty = document.getElementById('assorted-figures');
 const refresh = document.getElementById('refresh-button');
 const soundSwitch = document.getElementById('sound-switch');
-const SPEED_MEASURE_INTERVAL = 100; 
+const SPEED_MEASURE_INTERVAL = 50; 
+const TIME_THROW = 300;
+const ACTION_TIME_AFTER_STOPPING = 250;
 const whoaSounds = [
     'sounds/Whooaaaaa-1.mp3',
     'sounds/Whooaaaaa-2.mp3',
@@ -16,8 +18,14 @@ const whoaSounds = [
 ];
 const INNER_BANK_MESSAGE = 'Put in!';
 const PUT_MESSAGE = 'Whoooaaaaaa!';
+const timers = {}; // Ключи объекта = названия фигур, являющиеся объектами для собственных таймеров
+let speedMeasureTimer1 = null; // Интервальный таймер измерения скорости во время захвата фигуры (останавливается при отпускании)
+let speedMeasureTimer2 = null; // Серия таймеров измерения скорости во время броска фигуры (останавливается при обновлении)
+let backgroundChangeTimer = null;
 let putTimer = null;
-let finalPutTimer = null;
+let clearMessageTimer = null;
+let isPutting = false;
+let isThrowing = false;
 let muteAudio = null;
 let muteSpeaker = false;
 let currentAudio;
@@ -41,11 +49,13 @@ function refreshFigures() {
 }
 
 function activateInnerBank() {
-    innerBank.innerHTML = INNER_BANK_MESSAGE;
-    innerBank.onmouseenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
-    innerBank.onmouseleave = () => innerBank.innerHTML = '';
-    document.onmouseup = deactivateInnerBank;
-    document.touchend = deactivateInnerBank;
+    if (!isPutting && !isThrowing) {
+        innerBank.innerHTML = INNER_BANK_MESSAGE;
+        innerBank.onmouseenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
+        innerBank.onmouseleave = () => innerBank.innerHTML = '';
+        document.onmouseup = deactivateInnerBank;
+        document.touchend = deactivateInnerBank;
+    }
 
     function deactivateInnerBank() {
         innerBank.innerHTML = '';
@@ -90,15 +100,20 @@ function createFigures() {
     const figNames = ['square', 'triangle', 'circle', 'rectangle', 'ellipse', 'rhombus'];
     const colors = {
         yellow: '#fbff00',
-        green: '#65ff57',
-        pink: '#ff6ec7',
-        blue: '#6d77ff',
+        green: '#9aff57',
+        pink: '#ff70cf',
+        blue: '#7489ff',
         brown: '#ffb03b',
         skyblue: '#7affff'
     };
 
-    clearTimeout(putTimer);
-    clearTimeout(finalPutTimer);
+    for (let figure in timers) {
+        for (let timer of Object.keys(timers[figure])) {
+            clearTimeout(timers[figure][timer]);
+        }
+        delete timers[figure];
+    }
+
     assorty.innerHTML = '';
 
     const colNames = [];
@@ -134,23 +149,34 @@ function createFigures() {
 }
 
 function arrangeFigures() {
+    for (let figure in timers) {
+        delete timers[figure];
+    }
+
     const figureWraps = assorty.querySelectorAll('.figure-wrap');
     const figures = assorty.querySelectorAll('.figure');
     let putPermission = false;
+    let lastGrabbing = null;
     let lastPuttedBeforePause = null;
     let lastWhoaIndex = null;
+    let puttingBGColor;
 
-    innerBank.style.backgroundColor = '';
+    if (innerBank.style.backgroundColor) innerBank.style.backgroundColor = '';
     innerBank.innerHTML = '';
+    isPutting = false;
+    innerBank.onmousedown = activateInnerBank;
+    innerBank.touchstart = activateInnerBank;
 
     currentAudio = playSound('sounds/Start.mp3');
 
     for (let figure of figures) {
         k++;
         figure.hidden = false;
+        figure.style.cursor = '';
         const figureInfo = figure.querySelector('.figure-info');
         figureInfo.innerHTML = '(Not moved)';
         if (figure.classList.contains('put-in')) figure.classList.remove('put-in');
+        timers[figure.id] = {};
 
         figureWraps[k - 1].style.height = getComputedStyle(figure).height;
         figureWraps[k - 1].style.width = getComputedStyle(figure).width;
@@ -181,6 +207,7 @@ function arrangeFigures() {
             document.body.clientWidth, document.documentElement.clientWidth
         );
         const figure = event.target.closest('.figure');
+        if (figure.classList.contains('put-in')) return;
         const figureInfo = figure.querySelector('.figure-info');
         let innerBankRect = getRect(innerBank);
         let figureRect = getRect(figure);
@@ -190,14 +217,30 @@ function arrangeFigures() {
         let figY2 = figY1;
         const figureShiftX = event.pageX - figX1;
         const figureShiftY = event.pageY - figY1;
-        let x1, y1, x2, y2, t1, t2, tDelta, distance, speed;
+        let x1, y1, x2, y2, t1, t2, tDelta, distance, speed, figXDelta, figYDelta;
         let prevScrollX = window.pageXOffset;
         let prevScrollY = window.pageYOffset;
-        let speedMeasureTimer = null;
 
         innerBank.onmousedown = null;
         innerBank.touchstart = null;
         putPermission = false;
+        lastGrabbing = figure;
+
+        for (let fig in timers) {
+            if (fig == figure.id) {
+                for (let timer of Object.keys(timers[fig])) {
+                    if (timer != 'putTimer') {
+                        clearTimeout(timers[fig][timer]);
+                        delete timers[fig][timer];
+                    }
+                }
+            } else {
+                if ('clearMessageTimer' in timers[fig]) {
+                    clearTimeout(timers[fig]['clearMessageTimer']);
+                    delete timers[fig]['clearMessageTimer'];
+                }
+            }
+        }
     
         figure.style.zIndex = 10;
         figure.style.filter = 'brightness(90%)';
@@ -221,19 +264,17 @@ function arrangeFigures() {
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onmouseup = leaveFigure.bind(this);
         docArea.touchend = leaveFigure.bind(this);
-        // Защита при отжатии кнопки мыши за окном - при следующих нажатиях ничего не происходит,
-        // пока функция не будет снова назначена при отжатии кнопки мыши на элементе
         figure.onmousedown = null;
         figure.touchstart = null;
 
-        console.log('\nBegin speed measurement:');
+        console.log(`-----${figure.id} | Start moving-----`);
 
-        calcSpeed = calcSpeed.bind(this);
+        calcSpeed = calcSpeed.bind(this); // this = figure в функции calcSpeed
 
-        speedMeasureTimer = setInterval(() => { // this = figure, т. к. стрелочная функция не имеет своего this
-            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+        speedMeasureTimer1 = setInterval(() => {
+            console.log(`${figure.id} | Pointer coords: (${x1}, ${y1}) => (${x2}, ${y2})`);
 
-            innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
+            innerBank.innerHTML = figure.id[0].toUpperCase() + figure.id.slice(1);
             
             if ((x1 != x2) || (y1 != y2)) { // Если указатель мыши двигается
                 if ((figX1 != figX2) || (figY1 != figY2)) { // Если фигура двигается
@@ -248,9 +289,9 @@ function arrangeFigures() {
                 detectLocation(x2, y2);
                 t1 = Date.now();
                 innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
-
             }
         }, SPEED_MEASURE_INTERVAL);
+        timers[figure.id]['speedMeasureTimer1'] = speedMeasureTimer1;
 
         function moveAt(pageX, pageY) {
             let x = pageX - figureShiftX;
@@ -279,7 +320,7 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
-            clearInterval(speedMeasureTimer);
+            clearInterval(speedMeasureTimer1);
 
             document.removeEventListener('scroll', moveFigureOnScroll);
             document.removeEventListener('mousemove', moveFigure);
@@ -287,72 +328,282 @@ function arrangeFigures() {
             document.removeEventListener('keydown', preventZoomOnKeys);
             docArea.onmouseup = null;
             docArea.touchend = null;
+            figure.onmousedown = dragAndDrop;
+            figure.touchstart = dragAndDrop;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
 
-            console.log('-----Final calculations-----');
+            innerBank.onmousedown = activateInnerBank;
+            innerBank.touchstart = activateInnerBank;
+
             x2 = event.pageX;
             y2 = event.pageY;
-            console.log(`(${x1}, ${y1}) => (${x2}, ${y2})`);
+
+            console.log(`${figure.id} | Pointer coords: (${x1}, ${y1}) => (${x2}, ${y2})`);
+
             calcSpeed();
-    
-            if (putPermission) {
-                // Аудиоблок Whooaaaaa
-                let indexes = [0, 1, 2];
-                if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
-                shuffle(indexes);
-                currentAudio = playSound(whoaSounds[indexes[0]]);
-                lastWhoaIndex = indexes[0];
 
-                innerBankRect = getRect(innerBank);
-                let x = innerBankRect.left + innerBankRect.width / 2 - figure.offsetWidth / 2;
-                let y = innerBankRect.top + innerBankRect.height / 2 - figure.offsetHeight / 2;
-                figure.style.left = x + 'px';
-                figure.style.top = y + 'px';
+            if (!speed) {
+                if (putPermission) {
+                    puttingFigure();
+                    return;
+                }
 
-                innerBank.style.backgroundColor = '#d1eaff';
-                innerBank.innerHTML = PUT_MESSAGE;
-                figureInfo.innerHTML = '(Putted)';
-                figure.style.zIndex = '';
-                figure.classList.add('put-in');
-                lastPuttedBeforePause = figure;
-                putPermission = false;
-
-                const transitionTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in'))
-                    .transitionDuration) * 1000;
-
-                putTimer = setTimeout(() => {
-                    figure.hidden = true;
-                    k--;
-
-                    if (lastPuttedBeforePause == figure) {
-                        if (!putPermission) innerBank.style.backgroundColor = '';
-                        if (innerBank.innerHTML == PUT_MESSAGE) innerBank.innerHTML = '';
-
-                        innerBank.onmousedown = activateInnerBank;
-                        innerBank.touchstart = activateInnerBank;
-                    }
-
-                    if (!k) finalPutTimer = setTimeout(() => {
-                        currentAudio = muteAudio = playSound('sounds/Win.mp3');
-                        setTimeout(showRestoreQuestion, 10);
-                    }, 200);
-                }, transitionTime);
-            } else {
-                innerBank.onmousedown = activateInnerBank;
-                innerBank.touchstart = activateInnerBank;
-                figure.onmousedown = dragAndDrop; // Снова назначить функцию на нажатие, чтобы снять защиту
-                figure.touchstart = dragAndDrop;    // Снова назначить функцию на нажатие, чтобы снять защиту
                 figureInfo.innerHTML = '(Stopped)';
-                
-                innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
+
+                clearMessageTimer = setTimeout(clearInnerBankMessage, ACTION_TIME_AFTER_STOPPING);
+                timers[figure.id]['clearMessageTimer'] = clearMessageTimer;
+            } else {
+                figureInfo.innerHTML = '(Thrown)';
+                innerBank.innerHTML = figure.id[0].toUpperCase() + figure.id.slice(1);
                 innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
 
-                setTimeout(() => {
-                    if (innerBank.innerHTML != INNER_BANK_MESSAGE) innerBank.innerHTML = '';
-                }, 200);
+                throwFigure();
             }
+        }
+
+        function throwFigure() {
+            isThrowing = true;
+
+            figure.style.transition = `${TIME_THROW}ms cubic-bezier(.3,.5,.5,1)`;
+
+            if (putPermission) innerBank.style.backgroundColor = '';
+
+            console.log(`-----${figure.id} | Throwing-----`);
+
+            const ratio = TIME_THROW / tDelta / 4; // Коэффициент при замедлении
+            const figXThrow = figXDelta * ratio; // Всё расстояние по x, которое нужно пройти во время замедления
+            const figYThrow = figYDelta * ratio; // Всё расстояние по y, которое нужно пройти во время замедления
+
+            let [x, y] = calcThrowEndPoint(figXThrow, figYThrow);
+
+            //console.log(x, y);
+
+            x = x * 100 / docWidth;
+            figure.style.left = `calc(${x}%)`;
+
+            y = y * 100 / docHeight;
+            figure.style.top = `calc(${y}%)`;
+
+            let timeLeft = TIME_THROW;
+
+            speedMeasureTimer2 = setTimeout(function measeringSpeedAfterThrow() {
+                isThrowing = true;
+                
+                figureRect = getRect(figure);
+                figX2 = figureRect.left;
+                figY2 = figureRect.top;
+
+                console.log(`${figure.id} | Figure coords: ` +
+                    `(${figX1.toFixed(0)}, ${figY1.toFixed(0)}) => (${figX2.toFixed(0)}, ${figY2.toFixed(0)})`);
+
+                calcSpeed();
+
+                if (lastGrabbing == figure) { // Показывать инфо, если не захвачена другая фигура
+                    innerBank.innerHTML = figure.id[0].toUpperCase() + figure.id.slice(1);
+                    innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
+                }
+
+                timeLeft -= tDelta;
+
+                if (timeLeft < SPEED_MEASURE_INTERVAL) {
+                    speedMeasureTimer2 = setTimeout(() => {
+                        isThrowing = false;
+
+                        figure.style.transition = '';
+
+                        figureRect = getRect(figure);
+                        figX2 = figureRect.left;
+                        figY2 = figureRect.top;
+                        
+                        const figCenterX = figX2 + figure.offsetWidth / 2;
+                        const figCenterY = figY2 + figure.offsetHeight / 2;
+                        detectLocation(figCenterX, figCenterY);
+
+                        console.log(`-----${figure.id} | Stop moving-----`);
+                        console.log(`${figure.id} | Figure coords: ` +
+                            `(${figX1.toFixed(0)}, ${figY1.toFixed(0)}) => (${figX2.toFixed(0)}, ${figY2.toFixed(0)})`);
+
+                        calcSpeed();
+
+                        if (lastGrabbing == figure) { // Показывать инфо, если не захвачена другая фигура
+                            innerBank.innerHTML = figure.id[0].toUpperCase() + figure.id.slice(1);
+                            innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
+                        }
+
+                        if (putPermission) puttingFigure()
+                        else {
+                            figureInfo.innerHTML = '(Stopped)';
+
+                            clearMessageTimer = setTimeout(clearInnerBankMessage, ACTION_TIME_AFTER_STOPPING);
+                            timers[figure.id]['clearMessageTimer'] = clearMessageTimer;
+                        }
+                    }, timeLeft);
+                    timers[figure.id]['speedMeasureTimer2'] = speedMeasureTimer2;
+                } else {
+                    speedMeasureTimer2 = setTimeout(measeringSpeedAfterThrow, SPEED_MEASURE_INTERVAL);
+                    timers[figure.id]['speedMeasureTimer2'] = speedMeasureTimer2;
+                }
+            }, SPEED_MEASURE_INTERVAL);
+            timers[figure.id]['speedMeasureTimer2'] = speedMeasureTimer2;
+        }
+
+        function clearInnerBankMessage() {
+            if (isPutting) innerBank.innerHTML = PUT_MESSAGE
+            else if (lastGrabbing == figure) innerBank.innerHTML = '';
+        }
+
+        function calcThrowEndPoint(figXThrow, figYThrow) {            
+            figureRect = getRect(figure);
+            figX2 = figureRect.left;
+            figY2 = figureRect.top;
+
+            let x = figXThrow + figX2;
+            let y = figYThrow + figY2;
+            //let segment, xRatio, yRatio;
+
+            if (x < 0) {
+                x = 0;
+                //segment = figX2;
+                //xRatio = Math.abs((segment * 100) / figXThrow);
+                //y = figYThrow * ratio /100  + figY2;
+                //return [x, y];
+            }
+            if (x > docWidth - figure.offsetWidth) {
+                x = docWidth - figure.offsetWidth;
+                //segment = (docWidth - figure.offsetWidth) - figX2;
+                //xRatio = Math.abs((segment * 100) / figXThrow);
+                //y = figYThrow * ratio / 100  + figY2;
+                //return [x, y];
+            }
+            if (y < 0) {
+                y = 0;
+                //segment = figY2;
+                //yRatio = Math.abs((segment * 100) / figYThrow);
+                //x = figXThrow * ratio /100  + figX2;
+                //return [x, y];
+            }
+            if (y > docHeight - figure.offsetHeight) {
+                y = docHeight - figure.offsetHeight;
+                //segment = (docHeight - figure.offsetHeight) - figY2;
+                //yRatio = Math.abs((segment * 100) / figYThrow);
+                //x = figXThrow * ratio / 100  + figX2;
+                //return [x, y];
+            }
+
+            return [x, y];
+        }
+
+        function puttingFigure() {
+            console.log(`-----${figure.id} | Putting-----`);
+
+            // Аудиоблок Whooaaaaa
+            let indexes = [0, 1, 2];
+            if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
+            shuffle(indexes);
+            currentAudio = playSound(whoaSounds[indexes[0]]);
+            lastWhoaIndex = indexes[0];
+
+            innerBankRect = getRect(innerBank);
+            const x = innerBankRect.left + innerBankRect.width / 2 - figure.offsetWidth / 2;
+            const y = innerBankRect.top + innerBankRect.height / 2 - figure.offsetHeight / 2;
+            figure.style.left = x + 'px';
+            figure.style.top = y + 'px';
+
+            innerBank.style.backgroundColor = puttingBGColor = '#49ff8f'; // Зелёный
+            backgroundChangeTimer = setTimeout(() => {
+                if (!putPermission) {
+                    innerBank.style.backgroundColor = '#d1eaff'; // Светло-синий
+                    puttingBGColor = '#d1eaff'; // Светло-синий
+                }
+                else puttingBGColor = '#d1eaff'; // Светло-синий
+            }, ACTION_TIME_AFTER_STOPPING);
+            timers[figure.id]['backgroundChangeTimer'] = backgroundChangeTimer;
+
+            innerBank.innerHTML = PUT_MESSAGE;
+            isPutting = true;
+            figureInfo.innerHTML = '(Putted)';
+            figure.style.zIndex = '';
+            figure.style.cursor = 'cell';
+            figure.classList.add('put-in');
+            lastPuttedBeforePause = figure;
+            putPermission = false;
+
+            const transitionTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in'))
+                .transitionDuration) * 1000;
+
+            putTimer = setTimeout(() => {
+                figure.hidden = true;
+                k--;
+
+                console.log(`-----${figure.id} | Hidden-----`);
+
+                if (lastPuttedBeforePause == figure) {
+                    if (!putPermission) innerBank.style.backgroundColor = '';
+                    if (innerBank.innerHTML == PUT_MESSAGE) innerBank.innerHTML = '';
+                    isPutting = false;
+
+                    innerBank.onmousedown = activateInnerBank;
+                    innerBank.touchstart = activateInnerBank;
+                }
+
+                if (!k) {
+                    putTimer = setTimeout(() => {
+                        currentAudio = muteAudio = playSound('sounds/Win.mp3');
+
+                        putTimer = setTimeout(showRestoreQuestion, 10);
+                        timers[figure.id]['putTimer'] = putTimer;
+                    }, 200);
+                    timers[figure.id]['putTimer'] = putTimer;
+                }
+            }, transitionTime);
+            timers[figure.id]['putTimer'] = putTimer;
+        }
+
+        function detectLocation(x, y) {
+            innerBankRect = getRect(innerBank);
+
+            figure.hidden = true;
+            const elemBelow = document.elementFromPoint(x - window.pageXOffset, y - window.pageYOffset);
+            figure.hidden = false;
+
+            if (
+                x >= innerBankRect.left && x <= (innerBankRect.left + innerBankRect.width) &&
+                y >= innerBankRect.top && y <= (innerBankRect.top + innerBankRect.height)  &&
+                elemBelow == innerBank
+            ) {
+                if (!putPermission) {
+                    innerBank.style.backgroundColor = '#634186'; // Тёмно-фиолетовый
+                    putPermission = true;
+                }
+            } else {
+                if (putPermission) {
+                    if (isPutting) innerBank.style.backgroundColor = puttingBGColor;
+                    else innerBank.style.backgroundColor = '';
+                    
+                    putPermission = false;
+                }
+            }
+        }
+
+        function calcSpeed() {
+            t2 = Date.now();
+            tDelta = t2 - t1;
+            figXDelta = figX2 - figX1;
+            figYDelta = figY2 - figY1;
+            distance = Math.sqrt(figXDelta ** 2 + figYDelta ** 2);
+            speed = distance / tDelta;
+
+            console.log(this.id + ' | tDelta = ' + tDelta);
+            //console.log(this.id + ' | distance = ' + distance);
+            console.log(this.id + ' | speed = ' + speed);
+
+            t1 = t2;
+            x1 = x2;
+            y1 = y2;
+            figX1 = figX2;
+            figY1 = figY2;
         }
 
         function getRect(elem) {
@@ -395,62 +646,13 @@ function arrangeFigures() {
             figY2 = figureRect.top;
         }
 
-        function detectLocation(pageX, pageY) {
-            innerBankRect = getRect(innerBank);
-
-            figure.hidden = true;
-            let elemBelow = document.elementFromPoint(pageX - window.pageXOffset, pageY - window.pageYOffset);
-            figure.hidden = false;
-
-            if (
-                pageX >= innerBankRect.left && pageX <= (innerBankRect.left + innerBankRect.width) &&
-                pageY >= innerBankRect.top && pageY <= (innerBankRect.top + innerBankRect.height)  &&
-                elemBelow == innerBank
-            ) {
-                if (!putPermission) {
-                    enterBank(innerBank);
-                    putPermission = true;
-                }
-            } else {
-                if (putPermission) {
-                    leaveBank(innerBank);
-                    putPermission = false;
-                }
-            }
-
-            function enterBank(putElem) {
-                putElem.style.backgroundColor = '#634186';
-            }
-        
-            function leaveBank(putElem) {
-                putElem.style.backgroundColor = '';
-            }
-        }
-
-        function calcSpeed() {
-            t2 = Date.now();
-            tDelta = t2 - t1;
-            distance = Math.sqrt((figX2 - figX1) ** 2 + (figY2 - figY1) ** 2);
-            speed = distance / tDelta;
-
-            console.log(this.id + ' | tDelta = ' + tDelta);
-            console.log(this.id + ' | distance = ' + distance);
-            console.log(this.id + ' | speed = ' + speed);
-
-            t1 = t2;
-            x1 = x2;
-            y1 = y2;
-            figX1 = figX2;
-            figY1 = figY2;
-        }
-
         function showRestoreQuestion() {
             if (confirm('Restore elements?')) arrangeFigures()
             else {
                 alert('Bye-bye!');
                 currentAudio = playSound('sounds/End.mp3');
 
-                let endScreen = document.createElement('div');
+                const endScreen = document.createElement('div');
                 endScreen.style.cssText = `
                     width: 100%;
                     height: 100%;
