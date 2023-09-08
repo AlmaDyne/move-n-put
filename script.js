@@ -44,7 +44,7 @@ function refreshFigures() {
 }
 
 function activateInnerBank(event) {
-    //event.preventDefault();
+    event.preventDefault();
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
@@ -316,7 +316,7 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
-            //event.preventDefault();
+            event.preventDefault();
 
             clearInterval(speedMeasureTimer1);
 
