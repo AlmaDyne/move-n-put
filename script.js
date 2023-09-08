@@ -34,6 +34,18 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+document.onpointerdown = function(event) {
+    event.preventDefault();
+
+    document.onpointermove = function(event) {
+        event.preventDefault();
+    };
+
+    document.onpointerup = function() {
+        document.onpointermove = null;
+        document.onpointerup = null;
+    }
+};
 
 refreshFigures();
 
