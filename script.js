@@ -192,8 +192,6 @@ function arrangeFigures() {
         if (event.button != 0) return;
         if (!event.isPrimary) return;
 
-        alert(event.pointerId);
-
         const docHeight = Math.max(
             document.body.scrollHeight, document.documentElement.scrollHeight,
             document.body.offsetHeight, document.documentElement.offsetHeight,
@@ -303,7 +301,7 @@ function arrangeFigures() {
         }
         
         function moveFigure(event) {
-            figure.ontouchmove = () => false;
+            //figure.ontouchmove = () => false;
             //event.preventDefault();
 
             x2 = event.pageX;
