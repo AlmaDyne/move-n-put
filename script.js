@@ -44,6 +44,7 @@ function refreshFigures() {
 }
 
 function activateInnerBank(event) {
+    if (event.button != 0) return;
     if (!event.isPrimary) return;
 
     if (!isPutting && !isThrowing) {
@@ -190,7 +191,6 @@ function arrangeFigures() {
     }
 
     function dragAndDrop(event) {
-        //event.preventDefault();
         if (event.button != 0) return;
         if (!event.isPrimary) return;
 
