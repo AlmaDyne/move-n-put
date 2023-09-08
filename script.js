@@ -34,7 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
-document.ontouchstart = null;
+//document.ontouchstart = null;
 
 refreshFigures();
 
@@ -301,8 +301,7 @@ function arrangeFigures() {
         }
         
         function moveFigure(event) {
-            //figure.ontouchmove = () => false;
-            //event.preventDefault();
+            if (!event.isPrimary) return;
 
             x2 = event.pageX;
             y2 = event.pageY;
@@ -316,7 +315,7 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
-            //event.preventDefault();
+            if (!event.isPrimary) return;
 
             clearInterval(speedMeasureTimer1);
 
