@@ -31,11 +31,11 @@ let muteSpeaker = false;
 let currentAudio;
 let k; // Подсчёт элементов
 
-refreshFigures();
-
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+
+refreshFigures();
 
 function refreshFigures() {
     k = 0;
@@ -187,11 +187,11 @@ function arrangeFigures() {
     }
 
     function dragAndDrop(event) {
-        if (event.button != 0) return;
+        if (event.button != 0/* || !event.isPrimary*/) return;
 
         event.preventDefault();
 
-        console.log(event);
+        //alert(event.pointerId);
 
         const docHeight = Math.max(
             document.body.scrollHeight, document.documentElement.scrollHeight,

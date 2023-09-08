@@ -82,6 +82,7 @@ body {
     font-size: 20pt;
     cursor: pointer;
     user-select: none;
+    touch-action: none;
 }
 #inner-bank:hover {
     background-color: #d1eaff;
