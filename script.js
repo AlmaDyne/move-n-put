@@ -34,6 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+document.onpointerdown = (event) => event.preventDefault();
 document.onpointermove = (event) => event.preventDefault();
 
 refreshFigures();
@@ -260,7 +261,7 @@ function arrangeFigures() {
         docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onpointerup = leaveFigure;
-        figure.onpointerdown = null;
+        //figure.onpointerdown = null;
 
         console.log(`-----${figure.id} | Start moving-----`);
 
@@ -326,7 +327,7 @@ function arrangeFigures() {
             docArea.removeEventListener('wheel', preventZoomOnWheel);
             document.removeEventListener('keydown', preventZoomOnKeys);
             docArea.onpointerup = null;
-            figure.onpointerdown = dragAndDrop;
+            //figure.onpointerdown = dragAndDrop;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
