@@ -34,6 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+document.ontouchstart = null;
 
 refreshFigures();
 
@@ -45,10 +46,6 @@ function refreshFigures() {
 
 function activateInnerBank(event) {
     event.preventDefault();
-
-    if (event.pointerType != 'mouse') {
-        alert('Not mouse!');
-    }
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
@@ -185,17 +182,17 @@ function arrangeFigures() {
         figure.style.right = '';
         figureWraps[k - 1].append(figure);
 
+        figure.ontouchstart = () => false;
         figure.ondragstart = () => false;
         figure.onpointerdown = dragAndDrop;
     }
 
     function dragAndDrop(event) {
-        event.preventDefault();
-        event.stopPropagation();
+        //event.preventDefault();
         if (event.button != 0) return;
         if (!event.isPrimary) return;
 
-        //alert(event.pointerId);
+        alert(event.pointerId);
 
         const docHeight = Math.max(
             document.body.scrollHeight, document.documentElement.scrollHeight,
@@ -306,8 +303,8 @@ function arrangeFigures() {
         }
         
         function moveFigure(event) {
-            event.preventDefault();
-            event.stopPropagation();
+            figure.ontouchmove = () => false;
+            //event.preventDefault();
 
             x2 = event.pageX;
             y2 = event.pageY;
@@ -321,8 +318,7 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
-            event.preventDefault();
-            if (!event.isPrimary) return;
+            //event.preventDefault();
 
             clearInterval(speedMeasureTimer1);
 
