@@ -138,6 +138,7 @@ body {
     cursor: grab;
     user-select: none;
     z-index: 1;
+    touch-action: none;
 }
 .figure > p {
     position: relative;
