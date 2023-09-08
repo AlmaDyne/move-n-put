@@ -43,7 +43,9 @@ function refreshFigures() {
     arrangeFigures();
 }
 
-function activateInnerBank() {
+function activateInnerBank(event) {
+    event.preventDefault();
+
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
         innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;

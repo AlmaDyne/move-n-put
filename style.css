@@ -134,7 +134,7 @@ body {
     width: 200px; /* Считывается константой FIG_WIDTH в скрипте */
     background: linear-gradient(to top right, #315366 0%, #5c98bb 50%, #315366 100%); /* Общий цвет границы */
     color:#315366;
-    font-size: 18pt;
+    font-size: 17pt;
     cursor: grab;
     user-select: none;
     z-index: 1;
@@ -185,8 +185,8 @@ body {
     bottom: 3px;
 }
 #triangle > p {
-    width: 150px;
-    left: calc(50% - 150px/2);
+    width: 140px;
+    left: calc(50% - 140px/2);
     top: 106px;
 }
 
