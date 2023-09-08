@@ -35,10 +35,9 @@ refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
 
-window.onpointerdown = null;
-document.onpointerdown = null;
-document.body.onpointerdown = null;
-docArea.onpointerdown = null;
+document.onpointerdown = function(event) {
+    if (!event.isPrimary) return false;
+};
 
 refreshFigures();
 
@@ -49,7 +48,7 @@ function refreshFigures() {
 }
 
 function activateInnerBank(event) {
-    event.preventDefault();
+    //event.preventDefault();
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
@@ -163,10 +162,9 @@ function arrangeFigures() {
 
     if (innerBank.style.backgroundColor) innerBank.style.backgroundColor = '';
     innerBank.innerHTML = '';
+    innerBank.onpointerdown = activateInnerBank;
 
     isPutting = false;
-
-    innerBank.onpointerdown = activateInnerBank;
 
     currentAudio = playSound('sounds/Start.mp3');
 
@@ -174,6 +172,7 @@ function arrangeFigures() {
         k++;
         figure.hidden = false;
         figure.style.cursor = '';
+        figure.style.touchAction = 'none';
         const figureInfo = figure.querySelector('.figure-info');
         figureInfo.innerHTML = '(Not moved)';
         if (figure.classList.contains('put-in')) figure.classList.remove('put-in');
@@ -192,8 +191,8 @@ function arrangeFigures() {
     }
 
     function dragAndDrop(event) {
-        if (event.button != 0 || !event.isPrimary) return;
-
+        if (event.button != 0) return;
+        if (!event.isPrimary) return false;
         event.preventDefault();
 
         //alert(event.pointerId);
@@ -223,7 +222,6 @@ function arrangeFigures() {
         let prevScrollX = window.pageXOffset;
         let prevScrollY = window.pageYOffset;
 
-        innerBank.onpointerdown = null;
         putPermission = false;
         lastGrabbing = figure;
 
@@ -260,9 +258,10 @@ function arrangeFigures() {
         
         figure.setPointerCapture(event.pointerId); // Перенацелить все события указателя (до pointerup) на figure
         figure.addEventListener('pointermove', moveFigure, {passive: false});
-        document.addEventListener('scroll', moveFigureOnScroll);
-        docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
-        document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
+        //document.addEventListener('scroll', moveFigureOnScroll);
+        //docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
+        //document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
+        innerBank.onpointerdown = null;
         docArea.onpointerup = leaveFigure;
         figure.onpointerdown = null;
 
@@ -326,16 +325,15 @@ function arrangeFigures() {
             clearInterval(speedMeasureTimer1);
 
             figure.removeEventListener('pointermove', moveFigure, {passive: false});
-            document.removeEventListener('scroll', moveFigureOnScroll);
-            docArea.removeEventListener('wheel', preventZoomOnWheel);
-            document.removeEventListener('keydown', preventZoomOnKeys);
+            //document.removeEventListener('scroll', moveFigureOnScroll);
+            //docArea.removeEventListener('wheel', preventZoomOnWheel);
+            //document.removeEventListener('keydown', preventZoomOnKeys);
+            innerBank.onpointerdown = activateInnerBank;
             docArea.onpointerup = null;
             figure.onpointerdown = dragAndDrop;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
-
-            innerBank.onpointerdown = activateInnerBank;
 
             x2 = event.pageX;
             y2 = event.pageY;
