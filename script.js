@@ -156,7 +156,9 @@ function arrangeFigures() {
 
     if (innerBank.style.backgroundColor) innerBank.style.backgroundColor = '';
     innerBank.innerHTML = '';
+
     isPutting = false;
+
     innerBank.onpointerdown = activateInnerBank;
 
     currentAudio = playSound('sounds/Start.mp3');
@@ -178,8 +180,8 @@ function arrangeFigures() {
         figure.style.right = '';
         figureWraps[k - 1].append(figure);
 
-        figure.onpointerdown = dragAndDrop;
         figure.ondragstart = () => false;
+        figure.onpointerdown = dragAndDrop;
     }
 
     function dragAndDrop(event) {
@@ -240,7 +242,7 @@ function arrangeFigures() {
         t1 = t2 = Date.now();
         x1 = x2 = event.pageX;
         y1 = y2 = event.pageY;
-        figureInfo.innerHTML = x2 + ':' + y2;
+        figureInfo.innerHTML = x2.toFixed(0) + ':' + y2.toFixed(0);
         moveAt(x1, y1);
         detectLocation(x1, y1);
 
@@ -248,7 +250,8 @@ function arrangeFigures() {
         innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
         
         document.addEventListener('scroll', moveFigureOnScroll);
-        document.addEventListener('pointermove', moveFigure);
+        figure.setPointerCapture(event.pointerId); // Перенацелить все события указателя (до pointerup) на figure
+        figure.addEventListener('pointermove', moveFigure);
         docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onpointerup = leaveFigure;
@@ -273,7 +276,7 @@ function arrangeFigures() {
                 }
             }
             else { // Если никакого движения нет
-                detectLocation(x2, y2);
+                //detectLocation(x2, y2);
                 t1 = Date.now();
                 innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
             }
@@ -297,7 +300,7 @@ function arrangeFigures() {
         function moveFigure(event) {
             x2 = event.pageX;
             y2 = event.pageY;
-            figureInfo.innerHTML = x2 + ':' + y2;
+            figureInfo.innerHTML = x2.toFixed(0) + ':' + y2.toFixed(0);
             moveAt(x2, y2);
             detectLocation(x2, y2);
 
@@ -309,8 +312,8 @@ function arrangeFigures() {
         function leaveFigure(event) {
             clearInterval(speedMeasureTimer1);
 
+            figure.removeEventListener('pointermove', moveFigure);
             document.removeEventListener('scroll', moveFigureOnScroll);
-            document.removeEventListener('pointermove', moveFigure);
             docArea.removeEventListener('wheel', preventZoomOnWheel);
             document.removeEventListener('keydown', preventZoomOnKeys);
             docArea.onpointerup = null;
