@@ -191,6 +191,7 @@ function arrangeFigures() {
 
     function dragAndDrop(event) {
         event.preventDefault();
+        event.stopPropagation();
         if (event.button != 0) return;
         if (!event.isPrimary) return;
 
@@ -306,6 +307,7 @@ function arrangeFigures() {
         
         function moveFigure(event) {
             event.preventDefault();
+            event.stopPropagation();
 
             x2 = event.pageX;
             y2 = event.pageY;
