@@ -34,13 +34,8 @@ let k; // Подсчёт элементов
 refreshFigures();
 
 refresh.onclick = refreshFigures;
-refresh.touchstart = refreshFigures;
-
-innerBank.onmousedown = activateInnerBank;
-innerBank.touchstart = activateInnerBank;
-
 soundSwitch.onclick = switchSound;
-soundSwitch.touchstart = switchSound;
+innerBank.onpointerdown = activateInnerBank;
 
 function refreshFigures() {
     k = 0;
@@ -51,18 +46,16 @@ function refreshFigures() {
 function activateInnerBank() {
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
-        innerBank.onmouseenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
-        innerBank.onmouseleave = () => innerBank.innerHTML = '';
-        document.onmouseup = deactivateInnerBank;
-        document.touchend = deactivateInnerBank;
+        innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
+        innerBank.onpointerleave = () => innerBank.innerHTML = '';
+        document.onpointerup = deactivateInnerBank;
     }
 
     function deactivateInnerBank() {
         innerBank.innerHTML = '';
-        innerBank.onmouseenter = null;
-        innerBank.onmouseleave = null;
-        document.onmouseup = null;
-        document.touchend = null;
+        innerBank.onpointerenter = null;
+        innerBank.onpointerleave = null;
+        document.onpointerup = null;
     }
 }
 
@@ -164,8 +157,7 @@ function arrangeFigures() {
     if (innerBank.style.backgroundColor) innerBank.style.backgroundColor = '';
     innerBank.innerHTML = '';
     isPutting = false;
-    innerBank.onmousedown = activateInnerBank;
-    innerBank.touchstart = activateInnerBank;
+    innerBank.onpointerdown = activateInnerBank;
 
     currentAudio = playSound('sounds/Start.mp3');
 
@@ -186,8 +178,7 @@ function arrangeFigures() {
         figure.style.right = '';
         figureWraps[k - 1].append(figure);
 
-        figure.onmousedown = dragAndDrop;
-        figure.touchstart = dragAndDrop;
+        figure.onpointerdown = dragAndDrop;
         figure.ondragstart = () => false;
     }
 
@@ -221,8 +212,7 @@ function arrangeFigures() {
         let prevScrollX = window.pageXOffset;
         let prevScrollY = window.pageYOffset;
 
-        innerBank.onmousedown = null;
-        innerBank.touchstart = null;
+        innerBank.onpointerdown = null;
         putPermission = false;
         lastGrabbing = figure;
 
@@ -258,14 +248,11 @@ function arrangeFigures() {
         innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
         
         document.addEventListener('scroll', moveFigureOnScroll);
-        document.addEventListener('mousemove', moveFigure);
-        document.addEventListener('touchmove', moveFigure);
+        document.addEventListener('pointermove', moveFigure);
         docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
-        docArea.onmouseup = leaveFigure.bind(this);
-        docArea.touchend = leaveFigure.bind(this);
-        figure.onmousedown = null;
-        figure.touchstart = null;
+        docArea.onpointerup = leaveFigure;
+        figure.onpointerdown = null;
 
         console.log(`-----${figure.id} | Start moving-----`);
 
@@ -323,19 +310,16 @@ function arrangeFigures() {
             clearInterval(speedMeasureTimer1);
 
             document.removeEventListener('scroll', moveFigureOnScroll);
-            document.removeEventListener('mousemove', moveFigure);
+            document.removeEventListener('pointermove', moveFigure);
             docArea.removeEventListener('wheel', preventZoomOnWheel);
             document.removeEventListener('keydown', preventZoomOnKeys);
-            docArea.onmouseup = null;
-            docArea.touchend = null;
-            figure.onmousedown = dragAndDrop;
-            figure.touchstart = dragAndDrop;
+            docArea.onpointerup = null;
+            figure.onpointerdown = dragAndDrop;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
 
-            innerBank.onmousedown = activateInnerBank;
-            innerBank.touchstart = activateInnerBank;
+            innerBank.onpointerdown = activateInnerBank;
 
             x2 = event.pageX;
             y2 = event.pageY;
@@ -544,8 +528,7 @@ function arrangeFigures() {
                     if (innerBank.innerHTML == PUT_MESSAGE) innerBank.innerHTML = '';
                     isPutting = false;
 
-                    innerBank.onmousedown = activateInnerBank;
-                    innerBank.touchstart = activateInnerBank;
+                    innerBank.onpointerdown = activateInnerBank;
                 }
 
                 if (!k) {
@@ -596,7 +579,7 @@ function arrangeFigures() {
             speed = distance / tDelta;
 
             console.log(this.id + ' | tDelta = ' + tDelta);
-            //console.log(this.id + ' | distance = ' + distance);
+            console.log(this.id + ' | distance = ' + distance);
             console.log(this.id + ' | speed = ' + speed);
 
             t1 = t2;
