@@ -51,6 +51,7 @@ function activateInnerBank(event) {
         innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
         innerBank.onpointerleave = () => innerBank.innerHTML = '';
         document.onpointerup = deactivateInnerBank;
+        innerBank.onpointerdown = null;
     }
 
     function deactivateInnerBank(event) {
@@ -60,6 +61,7 @@ function activateInnerBank(event) {
         innerBank.onpointerenter = null;
         innerBank.onpointerleave = null;
         document.onpointerup = null;
+        innerBank.onpointerdown = activateInnerBank;
     }
 }
 
