@@ -189,6 +189,8 @@ function arrangeFigures() {
 
         event.preventDefault();
 
+        console.log(event);
+
         const docHeight = Math.max(
             document.body.scrollHeight, document.documentElement.scrollHeight,
             document.body.offsetHeight, document.documentElement.offsetHeight,
@@ -251,7 +253,7 @@ function arrangeFigures() {
         
         document.addEventListener('scroll', moveFigureOnScroll);
         figure.setPointerCapture(event.pointerId); // Перенацелить все события указателя (до pointerup) на figure
-        figure.addEventListener('pointermove', moveFigure);
+        figure.addEventListener('pointermove', moveFigure, {passive: false});
         docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onpointerup = leaveFigure;
@@ -298,6 +300,8 @@ function arrangeFigures() {
         }
         
         function moveFigure(event) {
+            event.preventDefault();
+
             x2 = event.pageX;
             y2 = event.pageY;
             figureInfo.innerHTML = x2.toFixed(0) + ':' + y2.toFixed(0);
@@ -310,9 +314,11 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
+            event.preventDefault();
+
             clearInterval(speedMeasureTimer1);
 
-            figure.removeEventListener('pointermove', moveFigure);
+            figure.removeEventListener('pointermove', moveFigure, {passive: false});
             document.removeEventListener('scroll', moveFigureOnScroll);
             docArea.removeEventListener('wheel', preventZoomOnWheel);
             document.removeEventListener('keydown', preventZoomOnKeys);
