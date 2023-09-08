@@ -34,6 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+document.onpointermove = (event) => event.preventDefault();
 
 refreshFigures();
 
