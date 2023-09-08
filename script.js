@@ -47,7 +47,6 @@ function activateInnerBank(event) {
     event.preventDefault();
 
     if (event.pointerType != 'mouse') {
-        document.querySelector('#inner-bank:hover').style.backgroundColor = '#fff';
         alert('Not mouse!');
     }
 
