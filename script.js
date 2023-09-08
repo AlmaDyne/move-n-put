@@ -34,8 +34,6 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
-document.onpointerdown = (event) => event.preventDefault();
-document.onpointermove = (event) => event.preventDefault();
 
 refreshFigures();
 
@@ -46,7 +44,7 @@ function refreshFigures() {
 }
 
 function activateInnerBank(event) {
-    event.preventDefault();
+    //event.preventDefault();
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
