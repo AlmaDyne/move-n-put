@@ -34,7 +34,6 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitch.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
-//document.ontouchstart = null;
 
 refreshFigures();
 
@@ -45,7 +44,7 @@ function refreshFigures() {
 }
 
 function activateInnerBank(event) {
-    event.preventDefault();
+    if (!event.isPrimary) return;
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
@@ -54,7 +53,9 @@ function activateInnerBank(event) {
         document.onpointerup = deactivateInnerBank;
     }
 
-    function deactivateInnerBank() {
+    function deactivateInnerBank(event) {
+        if (!event.isPrimary) return;
+
         innerBank.innerHTML = '';
         innerBank.onpointerenter = null;
         innerBank.onpointerleave = null;
@@ -69,8 +70,7 @@ function switchSound() {
         this.style.backgroundColor = '#5bdfb3';
         speaker.src = 'images/speaker.png';
         muteSpeaker = false;
-    } else {
-        this.style.backgroundColor = '#f14646';
+    } else {this.style.backgroundColor = '#f14646';
         speaker.src = 'images/speaker_mute.png';
         currentAudio.muted = true;
         muteSpeaker = true;
