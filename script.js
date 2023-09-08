@@ -189,7 +189,7 @@ function arrangeFigures() {
     function dragAndDrop(event) {
         if (event.button != 0/* || !event.isPrimary*/) return;
 
-        event.preventDefault();
+        //event.preventDefault();
 
         //alert(event.pointerId);
 
@@ -253,13 +253,12 @@ function arrangeFigures() {
         innerBank.innerHTML = this.id[0].toUpperCase() + this.id.slice(1);
         innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
         
-        document.addEventListener('scroll', moveFigureOnScroll);
         figure.setPointerCapture(event.pointerId); // Перенацелить все события указателя (до pointerup) на figure
         figure.addEventListener('pointermove', moveFigure, {passive: false});
+        document.addEventListener('scroll', moveFigureOnScroll);
         docArea.addEventListener('wheel', preventZoomOnWheel); // Запрет зума для Control + Wheel (работает только на элементе)
         document.addEventListener('keydown', preventZoomOnKeys); // Запрет зума для Control + '-'/'+'
         docArea.onpointerup = leaveFigure;
-        //figure.onpointerdown = null;
 
         console.log(`-----${figure.id} | Start moving-----`);
 
@@ -302,7 +301,7 @@ function arrangeFigures() {
         }
         
         function moveFigure(event) {
-            event.preventDefault();
+            //event.preventDefault();
 
             x2 = event.pageX;
             y2 = event.pageY;
@@ -316,7 +315,7 @@ function arrangeFigures() {
         }
     
         function leaveFigure(event) {
-            event.preventDefault();
+            //event.preventDefault();
 
             clearInterval(speedMeasureTimer1);
 
@@ -325,7 +324,6 @@ function arrangeFigures() {
             docArea.removeEventListener('wheel', preventZoomOnWheel);
             document.removeEventListener('keydown', preventZoomOnKeys);
             docArea.onpointerup = null;
-            //figure.onpointerdown = dragAndDrop;
 
             figure.style.filter = '';
             figure.style.cursor = 'grab';
