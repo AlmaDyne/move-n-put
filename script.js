@@ -187,7 +187,7 @@ function arrangeFigures() {
     }
 
     function dragAndDrop(event) {
-        if (event.button != 0/* || !event.isPrimary*/) return;
+        if (event.button != 0 || !event.isPrimary) return;
 
         event.preventDefault();
 
