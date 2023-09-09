@@ -7,7 +7,7 @@ const innerBank = document.getElementById('inner-bank');
 const figAmount = document.getElementById('figures-amount');
 const assorty = document.getElementById('assorted-figures');
 const refresh = document.getElementById('refresh-button');
-const soundSwitch = document.getElementById('sound-switch');
+const soundSwitcher = document.getElementById('sound-switcher');
 const SPEED_MEASURE_INTERVAL = 50; 
 const TIME_THROW = 300;
 const ACTION_TIME_AFTER_STOPPING = 250;
@@ -32,7 +32,7 @@ let currentAudio;
 let k; // Подсчёт элементов
 
 refresh.onclick = refreshFigures;
-soundSwitch.onclick = switchSound;
+soundSwitcher.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
 
 refreshFigures();
@@ -47,12 +47,14 @@ function activateInnerBank(event) {
     if (event.button != 0) return;
     if (!event.isPrimary) return;
 
+    if (event.pointerType != 'mouse') innerBank.classList.remove('hover-on');
+
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
         innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
         innerBank.onpointerleave = () => innerBank.innerHTML = '';
         document.onpointerup = deactivateInnerBank;
-        innerBank.onpointerdown = null;
+        //innerBank.onpointerdown = null;
     }
 
     function deactivateInnerBank(event) {
@@ -62,11 +64,13 @@ function activateInnerBank(event) {
         innerBank.onpointerenter = null;
         innerBank.onpointerleave = null;
         document.onpointerup = null;
-        innerBank.onpointerdown = activateInnerBank;
+        //innerBank.onpointerdown = activateInnerBank;
     }
 }
 
-function switchSound() {
+function switchSound(event) {
+    if (event.pointerType != 'mouse') soundSwitcher.classList.remove('hover-on');
+
     const speaker = this.querySelector('img');
 
     if (muteSpeaker) {
