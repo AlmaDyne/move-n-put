@@ -34,6 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitcher.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
+document.onpointermove = document.onpointerdown = hoverOnOff;
 
 refreshFigures();
 
@@ -47,8 +48,6 @@ function activateInnerBank(event) {
     if (event.button != 0) return;
     if (!event.isPrimary) return;
 
-    if (event.pointerType != 'mouse') innerBank.classList.remove('hover-on');
-
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
         if (event.pointerType == 'mouse') {
@@ -56,7 +55,6 @@ function activateInnerBank(event) {
             innerBank.onpointerleave = () => innerBank.innerHTML = '';
         }
         document.onpointerup = deactivateInnerBank;
-        //innerBank.onpointerdown = null;
     }
 
     function deactivateInnerBank(event) {
@@ -66,13 +64,10 @@ function activateInnerBank(event) {
         innerBank.onpointerenter = null;
         innerBank.onpointerleave = null;
         document.onpointerup = null;
-        //innerBank.onpointerdown = activateInnerBank;
     }
 }
 
-function switchSound(event) {
-    if (event.pointerType != 'mouse') soundSwitcher.classList.remove('hover-on');
-
+function switchSound() {
     const speaker = this.querySelector('img');
 
     if (muteSpeaker) {
@@ -98,6 +93,17 @@ function playSound(audioSource) {
         audio.play();
 
         return audio;
+    }
+}
+
+function hoverOnOff(event) {
+    if (event.pointerType != 'mouse') {
+        innerBank.classList.remove('hover-on');
+        soundSwitcher.classList.remove('hover-on');
+    }
+    else {
+        innerBank.classList.add('hover-on');
+        soundSwitcher.classList.add('hover-on');
     }
 }
 
