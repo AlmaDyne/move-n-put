@@ -51,20 +51,20 @@ function activateInnerBank(event) {
 
     if (!isPutting && !isThrowing) {
         innerBank.innerHTML = INNER_BANK_MESSAGE;
-        innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
-        innerBank.onpointerleave = () => innerBank.innerHTML = '';
+        //innerBank.onpointerenter = () => innerBank.innerHTML = INNER_BANK_MESSAGE;
+        //innerBank.onpointerleave = () => innerBank.innerHTML = '';
         document.onpointerup = deactivateInnerBank;
-        //innerBank.onpointerdown = null;
+        innerBank.onpointerdown = null;
     }
 
     function deactivateInnerBank(event) {
         if (!event.isPrimary) return;
 
         innerBank.innerHTML = '';
-        innerBank.onpointerenter = null;
-        innerBank.onpointerleave = null;
+        //innerBank.onpointerenter = null;
+        //innerBank.onpointerleave = null;
         document.onpointerup = null;
-        //innerBank.onpointerdown = activateInnerBank;
+        innerBank.onpointerdown = activateInnerBank;
     }
 }
 
