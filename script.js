@@ -34,7 +34,7 @@ let k; // Подсчёт элементов
 refresh.onclick = refreshFigures;
 soundSwitcher.onclick = switchSound;
 innerBank.onpointerdown = activateInnerBank;
-document.onpointermove = document.onpointerdown = hoverOnOff;
+document.onpointerenter = document.onpointerdown = hoverOnOff;
 
 refreshFigures();
 
