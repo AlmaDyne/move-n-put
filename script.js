@@ -89,7 +89,8 @@ function playSound(audioSource) {
         }, 50);
 
         let audio = new Audio(audioSource);
-        audio.preload = true;
+        audio.preload = 'auto';
+        audio.type = 'audio/mp3';
         audio.play();
 
         return audio;
@@ -197,8 +198,8 @@ function arrangeFigures() {
         figure.style.right = '';
         figureWraps[k - 1].append(figure);
 
-        figure.ontouchstart = () => false;
         figure.ondragstart = () => false;
+        figure.ontouchstart = () => false;
         figure.onpointerdown = dragAndDrop;
     }
 
