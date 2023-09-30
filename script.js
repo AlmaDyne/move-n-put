@@ -90,7 +90,7 @@ function playSound(audioSource) {
 
         let audio = new Audio(audioSource);
         audio.play();
-        
+        console.dir(audio);
         return audio;
     }
 }
@@ -505,11 +505,11 @@ function arrangeFigures() {
             console.log(`-----${figure.id} | Putting-----`);
 
             // Аудиоблок Whooaaaaa
-            let indexes = [0, 1, 2];
-            if (lastWhoaIndex != null) indexes.splice(lastWhoaIndex, 1);
-            shuffle(indexes);
-            currentAudio = playSound(whoaSounds[indexes[0]]);
-            lastWhoaIndex = indexes[0];
+            let audioIndexes = [0, 1, 2];
+            if (lastWhoaIndex != null) audioIndexes.splice(lastWhoaIndex, 1);
+            shuffle(audioIndexes);
+            currentAudio = playSound(whoaSounds[audioIndexes[0]]);
+            lastWhoaIndex = audioIndexes[0];
 
             innerBankRect = getRect(innerBank);
             const x = innerBankRect.left + innerBankRect.width / 2 - figure.offsetWidth / 2;
@@ -555,10 +555,13 @@ function arrangeFigures() {
 
                 if (!k) {
                     putTimer = setTimeout(() => {
-                        currentAudio = muteAudio = playSound('sounds/Win.mp3');
-
-                        putTimer = setTimeout(showRestoreQuestion, 10);
-                        timers[figure.id]['putTimer'] = putTimer;
+                        new Promise(resolve => {
+                            currentAudio = muteAudio = playSound('sounds/Win.mp3');
+                            resolve(currentAudio);
+                        }).then(() => {
+                            putTimer = setTimeout(showRestoreQuestion, 0);
+                            timers[figure.id]['putTimer'] = putTimer;
+                        });
                     }, 200);
                     timers[figure.id]['putTimer'] = putTimer;
                 }
