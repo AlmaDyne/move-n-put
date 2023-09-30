@@ -294,13 +294,12 @@ function arrangeFigures() {
                     calcSpeed();
                     innerBank.innerHTML += '<br>(Speed = ' + speed.toFixed(2) + ' px/ms)';
                 } else {
-                    t1 = Date.now();
+                    t1 = t2 = Date.now();
                     innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
                 }
             }
             else { // Если никакого движения нет
-                //detectLocation(x2, y2);
-                t1 = Date.now();
+                t1 = t2 = Date.now();
                 innerBank.innerHTML += '<br>(Speed = 0.00 px/ms)';
             }
         }, SPEED_MEASURE_INTERVAL);
@@ -323,6 +322,7 @@ function arrangeFigures() {
         function moveFigure(event) {
             if (!event.isPrimary) return;
 
+            t2 = Date.now();
             x2 = event.pageX;
             y2 = event.pageY;
             figureInfo.innerHTML = x2.toFixed(0) + ':' + y2.toFixed(0);
@@ -350,6 +350,7 @@ function arrangeFigures() {
             figure.style.filter = '';
             figure.style.cursor = 'grab';
 
+            t2 = Date.now();
             x2 = event.pageX;
             y2 = event.pageY;
 
@@ -385,7 +386,8 @@ function arrangeFigures() {
 
             console.log(`-----${figure.id} | Throwing-----`);
 
-            const ratio = TIME_THROW / tDelta / 4; // Коэффициент при замедлении
+            let ratio = TIME_THROW / tDelta / 5 ; // Коэффициент при замедлении
+            if (ratio > 3) ratio = 3;
             const figXThrow = figXDelta * ratio; // Всё расстояние по x, которое нужно пройти во время замедления
             const figYThrow = figYDelta * ratio; // Всё расстояние по y, которое нужно пройти во время замедления
 
@@ -404,6 +406,7 @@ function arrangeFigures() {
             speedMeasureTimer2 = setTimeout(function measeringSpeedAfterThrow() {
                 isThrowing = true;
                 
+                t2 = Date.now();
                 figureRect = getRect(figure);
                 figX2 = figureRect.left;
                 figY2 = figureRect.top;
@@ -426,6 +429,7 @@ function arrangeFigures() {
 
                         figure.style.transition = '';
 
+                        t2 = Date.now();
                         figureRect = getRect(figure);
                         figX2 = figureRect.left;
                         figY2 = figureRect.top;
@@ -601,7 +605,6 @@ function arrangeFigures() {
         }
 
         function calcSpeed() {
-            t2 = Date.now();
             tDelta = t2 - t1;
             figXDelta = figX2 - figX1;
             figYDelta = figY2 - figY1;
