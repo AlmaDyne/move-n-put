@@ -89,10 +89,8 @@ function playSound(audioSource) {
         }, 50);
 
         let audio = new Audio(audioSource);
-        audio.preload = 'auto';
-        audio.type = 'audio/mp3';
         audio.play();
-
+        
         return audio;
     }
 }
