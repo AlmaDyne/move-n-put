@@ -48,6 +48,11 @@ body {
     width: 64px;
     height: 24px;
     margin-left: 10px;
+    background-color: #cfcfcf;
+}
+
+#refresh-button.active {
+    width: 64px;
     background-color: #5bdfb3;
 }
 
@@ -274,7 +279,6 @@ body {
     border-radius: 50%;
     z-index: 20;
 }
-
 #center-mark.on-target {
     background-color: #ff0000;
 }

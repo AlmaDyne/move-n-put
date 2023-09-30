@@ -33,10 +33,16 @@ let k; // Подсчёт элементов
 
 refresh.onclick = refreshFigures;
 soundSwitcher.onclick = switchSound;
-innerBank.onpointerdown = activateInnerBank;
 document.onpointerenter = document.onpointerdown = hoverOnOff;
+innerBank.onclick = function() {
+    refreshFigures();
 
-refreshFigures();
+    refresh.disabled = false;
+    refresh.className = 'active';
+
+    innerBank.onclick = false;
+    innerBank.onpointerdown = activateInnerBank;
+};
 
 function refreshFigures() {
     k = 0;
