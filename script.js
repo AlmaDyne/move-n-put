@@ -74,7 +74,8 @@ function switchSound() {
         this.style.backgroundColor = '#5bdfb3';
         speaker.src = 'images/speaker.png';
         muteSpeaker = false;
-    } else {this.style.backgroundColor = '#f14646';
+    } else {
+        this.style.backgroundColor = '#f14646';
         speaker.src = 'images/speaker_mute.png';
         currentAudio.muted = true;
         muteSpeaker = true;
@@ -90,7 +91,7 @@ function playSound(audioSource) {
 
         let audio = new Audio(audioSource);
         audio.play();
-        console.dir(audio);
+        
         return audio;
     }
 }
@@ -528,13 +529,14 @@ function arrangeFigures() {
             timers[figure.id]['backgroundChangeTimer'] = backgroundChangeTimer;
 
             innerBank.innerHTML = PUT_MESSAGE;
-            isPutting = true;
             figureInfo.innerHTML = '(Putted)';
             figure.style.zIndex = '';
             figure.style.cursor = 'cell';
             figure.classList.add('put-in');
+
             lastPuttedBeforePause = figure;
             putPermission = false;
+            isPutting = true;
 
             const transitionTime = parseFloat(getComputedStyle(assorty.querySelector('.put-in'))
                 .transitionDuration) * 1000;
@@ -555,13 +557,10 @@ function arrangeFigures() {
 
                 if (!k) {
                     putTimer = setTimeout(() => {
-                        new Promise(resolve => {
-                            currentAudio = muteAudio = playSound('sounds/Win.mp3');
-                            resolve(currentAudio);
-                        }).then(() => {
-                            putTimer = setTimeout(showRestoreQuestion, 0);
-                            timers[figure.id]['putTimer'] = putTimer;
-                        });
+                        currentAudio = muteAudio = playSound('sounds/Win.mp3');
+                        
+                        putTimer = setTimeout(showRestoreQuestion, 50);
+                        timers[figure.id]['putTimer'] = putTimer;
                     }, 200);
                     timers[figure.id]['putTimer'] = putTimer;
                 }
