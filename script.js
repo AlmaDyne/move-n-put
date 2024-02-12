@@ -33,8 +33,10 @@ let k; // Подсчёт элементов
 
 refresh.onclick = refreshFigures;
 soundSwitcher.onclick = switchSound;
+innerBank.onclick = clickBank;
 document.onpointerenter = document.onpointerdown = hoverOnOff;
-innerBank.onclick = function() {
+
+function clickBank() {
     refreshFigures();
 
     refresh.disabled = false;
@@ -42,7 +44,7 @@ innerBank.onclick = function() {
 
     innerBank.onclick = false;
     innerBank.onpointerdown = activateInnerBank;
-};
+}
 
 function refreshFigures() {
     k = 0;
@@ -209,8 +211,8 @@ function arrangeFigures() {
     }
 
     function dragAndDrop(event) {
-        if (event.button != 0) return;
-        if (!event.isPrimary) return;
+        if (event.type == 'mouse' && event.button != 0) return;
+        if ((event.pointerType == 'touch' || event.pointerType == 'pen') && !event.isPrimary) return;
 
         const docHeight = Math.max(
             document.body.scrollHeight, document.documentElement.scrollHeight,
